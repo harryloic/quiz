@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>云网融合初级复习</title>
+<style>
+:root {
+  --primary: #4A90D9;
+  --primary-light: #E8F1FB;
+  --primary-dark: #3A7BC8;
+  --correct: #52C41A;
+  --correct-bg: #F6FFED;
+  --wrong: #FF4D4F;
+  --wrong-bg: #FFF2F0;
+  --text: #333;
+  --text-secondary: #888;
+  --border: #E8E8E8;
+  --bg: #F5F7FA;
+  --card-bg: #FFF;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; background:var(--bg); color:var(--text); line-height:1.6; overflow-x:hidden; }
+
+.topbar { position:fixed; top:0; left:0; right:0; height:52px; background:var(--primary); color:#fff; display:none; align-items:center; justify-content:space-between; padding:0 16px; z-index:100; box-shadow:0 2px 6px rgba(74,144,217,0.3); }
+.topbar .back { font-size:20px; cursor:pointer; width:32px; text-align:left; }
+.topbar .title { font-size:16px; font-weight:600; }
+.topbar .right { width:60px; text-align:right; }
+
+.page { display:none; min-height:100vh; padding-top:52px; }
+.page.active { display:block; }
+
+.home-hero { background:linear-gradient(135deg, var(--primary), var(--primary-dark)); color:#fff; padding:40px 24px 32px; text-align:center; }
+.home-hero h1 { font-size:22px; margin-bottom:8px; }
+.home-hero p { font-size:13px; opacity:0.85; }
+.home-hero .stats { display:flex; justify-content:center; gap:24px; margin-top:18px; }
+.home-hero .stat-item { text-align:center; }
+.home-hero .stat-item .num { font-size:24px; font-weight:700; }
+.home-hero .stat-item .label { font-size:11px; opacity:0.7; margin-top:2px; }
+
+.home-section { padding:16px; }
+.home-section h2 { font-size:15px; color:var(--text); margin-bottom:12px; padding-left:4px; }
+.mode-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.mode-card { background:var(--card-bg); border-radius:12px; padding:20px 16px; text-align:center; box-shadow:var(--shadow); cursor:pointer; transition:transform 0.15s; }
+.mode-card:active { transform:scale(0.96); }
+.mode-card .icon { font-size:32px; margin-bottom:8px; }
+.mode-card .name { font-size:14px; font-weight:600; color:var(--text); }
+.mode-card .desc { font-size:11px; color:var(--text-secondary); margin-top:4px; }
+
+.exam-config { background:var(--card-bg); border-radius:12px; padding:16px; box-shadow:var(--shadow); margin-bottom:16px; }
+.exam-config label { font-size:13px; color:var(--text); display:block; margin-bottom:6px; }
+.exam-config select, .exam-config input { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:#fff; color:var(--text); }
+.exam-config .row { display:flex; gap:12px; margin-bottom:12px; }
+.exam-config .row > div { flex:1; }
+.exam-config .btn { width:100%; padding:12px; background:var(--primary); color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:600; cursor:pointer; }
+.exam-config .btn:active { background:var(--primary-dark); }
+
+.search-box { margin-bottom:16px; }
+.search-box input { width:100%; padding:10px 14px; border:1px solid var(--border); border-radius:20px; font-size:14px; background:#fff; }
+
+.quiz-header { background:var(--card-bg); padding:10px 16px; display:flex; align-items:center; justify-content:space-between; box-shadow:var(--shadow); position:sticky; top:52px; z-index:50; }
+.quiz-progress-text { font-size:13px; color:var(--text-secondary); }
+.quiz-progress-bar { flex:1; height:6px; background:var(--border); border-radius:3px; margin:0 12px; overflow:hidden; }
+.quiz-progress-bar .fill { height:100%; background:var(--primary); border-radius:3px; transition:width 0.3s; }
+
+.quiz-card { background:var(--card-bg); margin:12px; border-radius:12px; padding:20px 16px; box-shadow:var(--shadow); }
+.q-tag { display:inline-block; font-size:11px; color:var(--primary); background:var(--primary-light); padding:2px 8px; border-radius:4px; margin-bottom:10px; }
+.q-tag.wrong-tag { color:var(--wrong); background:var(--wrong-bg); }
+.q-text { font-size:16px; font-weight:600; line-height:1.7; margin-bottom:18px; }
+
+.option-list { display:flex; flex-direction:column; gap:10px; }
+.option-item { display:flex; align-items:flex-start; padding:14px 14px; border:2px solid var(--border); border-radius:10px; cursor:pointer; transition:all 0.2s; }
+.option-item:active { transform:scale(0.98); }
+.option-item .letter { width:28px; height:28px; border-radius:50%; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; flex-shrink:0; margin-right:12px; color:var(--text-secondary); transition:all 0.2s; }
+.option-item .text { font-size:14px; line-height:1.6; flex:1; padding-top:3px; }
+.option-item.selected { border-color:var(--primary); background:var(--primary-light); }
+.option-item.selected .letter { border-color:var(--primary); background:var(--primary); color:#fff; }
+.option-item.correct { border-color:var(--correct); background:var(--correct-bg); }
+.option-item.correct .letter { border-color:var(--correct); background:var(--correct); color:#fff; }
+.option-item.wrong { border-color:var(--wrong); background:var(--wrong-bg); }
+.option-item.wrong .letter { border-color:var(--wrong); background:var(--wrong); color:#fff; }
+.option-item.disabled { cursor:default; }
+
+.quiz-actions { display:flex; gap:12px; padding:0 12px; margin-top:16px; margin-bottom:30px; }
+.quiz-actions button { flex:1; padding:12px; border:1px solid var(--border); border-radius:8px; font-size:14px; background:var(--card-bg); color:var(--text); cursor:pointer; }
+.quiz-actions button:active { background:var(--bg); }
+.quiz-actions button:disabled { opacity:0.4; }
+.quiz-actions .next-btn { background:var(--primary); color:#fff; border:none; font-weight:600; }
+
+.feedback { margin:16px 0 0; padding:12px 16px; border-radius:8px; font-size:14px; display:none; }
+.feedback.show { display:block; }
+.feedback.correct { background:var(--correct-bg); color:var(--correct); }
+.feedback.wrong { background:var(--wrong-bg); color:var(--wrong); }
+.feedback .answer-text { font-weight:600; }
+
+.submit-bar { display:none; position:fixed; bottom:0; left:0; right:0; padding:14px 16px; background:var(--card-bg); box-shadow:0 -2px 8px rgba(0,0,0,0.1); z-index:80; }
+.submit-bar.show { display:block; }
+.submit-bar button { width:100%; padding:14px; background:var(--primary); color:#fff; border:none; border-radius:10px; font-size:16px; font-weight:600; cursor:pointer; }
+
+.result-card { background:var(--card-bg); margin:16px; border-radius:12px; padding:24px; box-shadow:var(--shadow); text-align:center; }
+.result-score { font-size:48px; font-weight:700; color:var(--primary); }
+.result-info { font-size:14px; color:var(--text-secondary); margin-top:8px; }
+.result-stats { display:flex; justify-content:space-around; margin-top:20px; padding-top:20px; border-top:1px solid var(--border); }
+.result-stats .item { text-align:center; }
+.result-stats .item .num { font-size:20px; font-weight:700; }
+.result-stats .item .label { font-size:12px; color:var(--text-secondary); margin-top:4px; }
+.result-stats .item .num.green { color:var(--correct); }
+.result-stats .item .num.red { color:var(--wrong); }
+.result-actions { padding:0 16px; margin-top:20px; display:flex; gap:12px; }
+.result-actions button { flex:1; padding:12px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; }
+.result-actions .review { background:var(--card-bg); border:1px solid var(--border); color:var(--text); }
+.result-actions .home { background:var(--primary); color:#fff; border:none; }
+
+.fav-list, .search-list { padding:12px; }
+.fav-item { background:var(--card-bg); border-radius:10px; padding:14px; margin-bottom:10px; box-shadow:var(--shadow); cursor:pointer; }
+.fav-item .q-preview { font-size:14px; font-weight:500; line-height:1.5; }
+.fav-item .q-meta { font-size:12px; color:var(--text-secondary); margin-top:6px; display:flex; justify-content:space-between; }
+.fav-item .q-meta .tag { color:var(--primary); }
+
+.empty-state { text-align:center; padding:60px 20px; color:var(--text-secondary); }
+.empty-state .icon { font-size:40px; margin-bottom:12px; opacity:0.4; }
+.empty-state p { font-size:14px; }
+
+.bookmark-btn { position:fixed; bottom:20px; right:20px; width:48px; height:48px; border-radius:50%; background:var(--primary); color:#fff; border:none; font-size:22px; display:none; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(74,144,217,0.4); cursor:pointer; z-index:60; transition:transform 0.2s; }
+.bookmark-btn:active { transform:scale(0.9); }
+.bookmark-btn.active { background:#FFB400; }
+
+.toast { position:fixed; top:60px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.75); color:#fff; padding:8px 20px; border-radius:20px; font-size:13px; z-index:200; opacity:0; transition:opacity 0.3s; pointer-events:none; }
+.toast.show { opacity:1; }
+
+.swipe-hint { text-align:center; font-size:12px; color:var(--text-secondary); padding:8px; opacity:0.5; }
+
+#debug-panel { display:none; position:fixed; top:60px; left:10px; right:10px; background:#fff; border:2px solid red; border-radius:8px; padding:12px; z-index:999; font-size:12px; max-height:300px; overflow:auto; }
+
+@media (max-width: 380px) {
+  .mode-grid { grid-template-columns:1fr; }
+  .quiz-card { padding:16px 12px; }
+  .q-text { font-size:15px; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar" id="topbar">
+  <div class="back" id="btn-home">&#8592;</div>
+  <div class="title" id="topbar-title">刷题</div>
+  <div class="right" id="topbar-right"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="page active" id="page-home">
+  <div class="home-hero">
+    <h1>云网融合初级复习</h1>
+    <p>共 276 题 · 单选 190 题 · 多选 86 题</p>
+    <div class="stats">
+      <div class="stat-item"><div class="num" id="stat-done">0</div><div class="label">已做</div></div>
+      <div class="stat-item"><div class="num" id="stat-accuracy">0%</div><div class="label">正确率</div></div>
+      <div class="stat-item"><div class="num" id="stat-wrong">0</div><div class="label">错题</div></div>
+      <div class="stat-item"><div class="num" id="stat-fav">0</div><div class="label">收藏</div></div>
+    </div>
+  </div>
+  <div class="home-section">
+    <h2>练习模式</h2>
+    <div class="mode-grid">
+      <div class="mode-card" data-action="practice-order"><div class="icon">&#128203;</div><div class="name">顺序练习</div><div class="desc">1-276题依次刷</div></div>
+      <div class="mode-card" data-action="practice-random"><div class="icon">&#128256;</div><div class="name">随机练习</div><div class="desc">打乱顺序刷</div></div>
+      <div class="mode-card" data-action="wrong-mode"><div class="icon">&#10060;</div><div class="name">错题本</div><div class="desc" id="wrong-count-desc">0题待复习</div></div>
+      <div class="mode-card" data-action="fav-mode"><div class="icon">&#11088;</div><div class="name">收藏夹</div><div class="desc" id="fav-count-desc">0题收藏</div></div>
+    </div>
+  </div>
+  <div class="home-section">
+    <h2>模拟考试</h2>
+    <div class="exam-config">
+      <div class="row">
+        <div>
+          <label>题数</label>
+          <select id="exam-count">
+            <option value="20">20题</option>
+            <option value="50" selected>50题</option>
+            <option value="100">100题</option>
+            <option value="276">全部276题</option>
+          </select>
+        </div>
+        <div>
+          <label>限时(分钟)</label>
+          <select id="exam-time">
+            <option value="0">不限时</option>
+            <option value="20" selected>20分钟</option>
+            <option value="45">45分钟</option>
+            <option value="90">90分钟</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn" id="btn-start-exam">开始考试</button>
+    </div>
+  </div>
+  <div class="home-section">
+    <h2>搜索题目</h2>
+    <div class="search-box">
+      <input id="search-input" placeholder="输入关键词搜索题目...">
+    </div>
+    <div class="search-list" id="search-results"></div>
+  </div>
+</div>
+
+<div class="page" id="page-quiz">
+  <div class="quiz-header">
+    <div class="quiz-progress-text" id="quiz-progress-text">1/276</div>
+    <div class="quiz-progress-bar"><div class="fill" id="quiz-progress-fill" style="width:0%"></div></div>
+    <div class="quiz-progress-text" id="quiz-score-text" style="color:var(--primary)"></div>
+  </div>
+  <div id="quiz-content"></div>
+  <div class="quiz-actions" id="quiz-actions">
+    <button id="prev-btn">&#8592; 上一题</button>
+    <button class="next-btn" id="next-btn">下一题 &#8594;</button>
+  </div>
+  <button class="bookmark-btn" id="bookmark-btn">&#9734;</button>
+</div>
+
+<div class="page" id="page-result">
+  <div class="result-card">
+    <div class="result-score" id="result-score">0</div>
+    <div class="result-info" id="result-info">考试完成</div>
+    <div class="result-stats">
+      <div class="item"><div class="num green" id="result-correct">0</div><div class="label">答对</div></div>
+      <div class="item"><div class="num red" id="result-wrong">0</div><div class="label">答错</div></div>
+      <div class="item"><div class="num" id="result-blank">0</div><div class="label">未答</div></div>
+    </div>
+  </div>
+  <div class="result-actions">
+    <button class="review" id="btn-review">查看错题</button>
+    <button class="home" id="btn-result-home">返回首页</button>
+  </div>
+</div>
+
+<div class="page" id="page-list">
+  <div class="fav-list" id="list-content"></div>
+</div>
+
+<div id="submit-bar-container"></div>
+
+<script>
+// === Question Data ===
+var QUESTIONS = [{"id": 1, "question": "以下哪一项不属于基础资源共享技术（）", "options": {"A": "云计算资源池技术", "B": "服务器安全技术", "C": "云存储资源池技术", "D": "服务器虚拟化整合技术"}, "answer": ["B"], "multi": false}, {"id": 2, "question": "虚拟化将（）,（）,（）一同封装在一个可迁移的虚机档案文件中", "options": {"A": "硬件", "B": "操作系统", "C": "应用程序", "D": "裸金属架构"}, "answer": ["A", "B", "C"], "multi": true}, {"id": 3, "question": "通过虚拟化进行服务器整合的优势，哪一项是错误的（）", "options": {"A": "大大提高硬件利用率", "B": "增加系统的可管理性", "C": "增加系统的复杂性", "D": "简化服务器安装过程节约时间"}, "answer": ["C"], "multi": false}, {"id": 4, "question": "主要开发语言为python的开源云平台是（）", "options": {"A": "OpenStack", "B": "CloudStack", "C": "Eucalyptus", "D": "OpenNebula"}, "answer": ["A", "B"], "multi": true}, {"id": 5, "question": "Horizon是一个用以管理、控制OpenStack服务的Web控制面板，它可以（）", "options": {"A": "管理实例、镜像", "B": "创建密匙对", "C": "对实例添加卷", "D": "操作Swift容器"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 6, "question": "Glance管理和提供镜像服务，支持多种镜像格式，其中非结构化的镜像格式是（）", "options": {"A": "raw", "B": "vmdk", "C": "iso", "D": "aki"}, "answer": ["A"], "multi": false}, {"id": 7, "question": "以下哪一项不属于资源池的自动化管理（）", "options": {"A": "虚拟机自动化部署", "B": "存储自动化", "C": "资源调度", "D": "自动计费"}, "answer": ["D"], "multi": false}, {"id": 8, "question": "Endpoint用来通过访问和定位某个Openstack service的地址，通常是一个（）", "options": {"A": "数据库", "B": "软件", "C": "终端", "D": "URL"}, "answer": ["D"], "multi": false}, {"id": 9, "question": "云操作系统对云存储的要求有（）", "options": {"A": "统一存储", "B": "虚拟化存储", "C": "高扩展性", "D": "高性能"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 10, "question": "以下哪一项为软件即服务（）", "options": {"A": "IaaS", "B": "PaaS", "C": "SaaS", "D": "DaaS"}, "answer": ["C"], "multi": false}, {"id": 11, "question": "以下关于全虚拟化和半虚拟化的说法中错误的是（）", "options": {"A": "全虚拟化不需要任何硬件辅助，且性能损失很少", "B": "全虚拟化性能损失很大，但通过CPU硬件辅助虚拟化可大幅度降低性能损失", "C": "半虚拟化始终要求对虚拟机操作系统的内核进行修改", "D": "半虚拟化的典型代表是XEN，全虚拟化的典型代表是KVM和VMWare"}, "answer": ["A"], "multi": false}, {"id": 12, "question": "云计算云加速服务包括哪些（）", "options": {"A": "视频加速", "B": "网页加速", "C": "下载加速", "D": "内存加速"}, "answer": ["A", "B", "C"], "multi": true}, {"id": 13, "question": "以下不属于OPENSTACK 常用的专用部署工具是（）", "options": {"A": "DevStack", "B": "Crowbar", "C": "Puppet", "D": "Fuel"}, "answer": ["C"], "multi": false}, {"id": 14, "question": "以下哪3种是目前使用最广泛的负载均衡软件（）", "options": {"A": "Nginx", "B": "LVS", "C": "Haproxy", "D": "F5"}, "answer": ["A", "B", "C"], "multi": true}, {"id": 15, "question": "（）是centos下软件包管理的一种工具，可解决批量安装和软件依赖的问题。", "options": {"A": "rpm", "B": "yum", "C": "install", "D": "atp-get"}, "answer": ["B"], "multi": false}, {"id": 16, "question": "LINUX选项的缩写使用（）字符", "options": {"A": "-", "B": "--", "C": "/", "D": "\\"}, "answer": ["A"], "multi": false}, {"id": 17, "question": "以下关于KVM的说法正确的是（）", "options": {"A": "KVM是最底层的hypervisor，它是用来模拟CPU的运行，它缺少了对network和周边I/O的支持。", "B": "QEMU-KVM就是一个完整的模拟器，它是构建基于KVM上面的，它提供了完整的网络和I/O支持。", "C": "KVM是Linux kernel的一个模块。可以用命令modprobe去加载KVM模块。", "D": "Openstack通过直接控制qemu-kvm的方式支持KVM虚机"}, "answer": ["A", "B", "C"], "multi": true}, {"id": 18, "question": "资源池中央集群管理与监控可以管理哪些资源（）", "options": {"A": "服务器群组", "B": "虚拟机", "C": "机房空调", "D": "机房电源"}, "answer": ["A", "B"], "multi": true}, {"id": 19, "question": "关于快照和快照链，下列说法正确的是（）", "options": {"A": "快照链指的是对磁盘进行多次快照后产生的一系列快照", "B": "快照链中某一个快照丢失不会影响快照的使用", "C": "创建快照时需要把云主机关机", "D": "有了快照，即使原LUN整个损坏也可以恢复以前的数据"}, "answer": ["A"], "multi": false}, {"id": 20, "question": "OpenStack中提供身份服务的组件是（）", "options": {"A": "Neutron", "B": "Keystone", "C": "Swift", "D": "Cinder"}, "answer": ["B"], "multi": false}, {"id": 21, "question": "LIUNX显示文件和目录由根目录开始的树形结构的命令是（）", "options": {"A": "tree", "B": "ls -r", "C": "pwd", "D": "ln"}, "answer": ["A"], "multi": false}, {"id": 22, "question": "虚拟化高可用，在一台服务器不可用时会做什么操作（）", "options": {"A": "关闭虚拟机", "B": "迁移虚拟机存储", "C": "迁移虚拟机网络", "D": "在其他宿主机上重启虚拟机"}, "answer": ["D"], "multi": false}, {"id": 23, "question": "以下哪一个负载均衡软件仅能支持http、https和Email协议（）", "options": {"A": "Nginx", "B": "LVS", "C": "Haproxy", "D": "F5"}, "answer": ["A"], "multi": false}, {"id": 24, "question": "以下哪一项不属于资源池管理与运营功能（）", "options": {"A": "存储资源管理", "B": "监控管理", "C": "自动化管理", "D": "机房管理"}, "answer": ["D"], "multi": false}, {"id": 25, "question": "keystone是openstack框架中负责（）的模块", "options": {"A": "管理身份验证", "B": "服务规则", "C": "服务令牌功能", "D": "存储服务"}, "answer": ["A", "B", "C"], "multi": true}, {"id": 26, "question": "（）是OpenStack中各种服务的Web管理门户", "options": {"A": "Cinder", "B": "Horizon", "C": "Swift", "D": "Neutron"}, "answer": ["B"], "multi": false}, {"id": 27, "question": "除了root用户外，其它用户的家目录缺省在（）下", "options": {"A": "/etc", "B": "/root", "C": "/home", "D": "/dev"}, "answer": ["C"], "multi": false}, {"id": 28, "question": "下列不是云虚拟化的是（）", "options": {"A": "服务器虚拟化", "B": "存储虚拟化", "C": "计算机", "D": "网络虚拟化"}, "answer": ["C"], "multi": false}, {"id": 29, "question": "SDN的南向接口除了Openflow，还有哪些？", "options": {"A": "HTTP", "B": "Netconf", "C": "XMPP", "D": "LISP"}, "answer": ["B", "C", "D"], "multi": true}, {"id": 30, "question": "虚拟机故障迁移具有哪些特点（ ）", "options": {"A": "服务器故障时自动重启虚拟机，无需引入第三方HA软件", "B": "业务中断时间可以在3分钟以内", "C": "可配置的保护级别和告警", "D": "提供比物理服务器更长的运行时间"}, "answer": ["A", "B", "C"], "multi": true}, {"id": 31, "question": "以下哪一项不属于云应用平台开放接口（）", "options": {"A": "运维", "B": "开发", "C": "部署", "D": "发布"}, "answer": ["A"], "multi": false}, {"id": 32, "question": "什么是suid权限？", "options": {"A": "只有root才能执行", "B": "只有文件所有者才能执行", "C": "执行时和文件所有者具有相同的身份", "D": "使用nobody用户执行"}, "answer": ["C"], "multi": false}, {"id": 33, "question": "哪个SDN开源控制器是由NTT开发，能够与OpenStack平台整合，具备丰富的控制器API，支持网络管控应用的创建。", "options": {"A": "Beacon", "B": "Ryu", "C": "Floodlight", "D": "NodeFlow"}, "answer": ["B"], "multi": false}, {"id": 34, "question": "( ) 命令可以查看网络的状态信息。", "options": {"A": "netstat", "B": "netstate", "C": "net", "D": "network"}, "answer": ["A"], "multi": false}, {"id": 35, "question": "以下哪个组件是Openstack中提供计算的组件（）", "options": {"A": "Glance", "B": "Keystone", "C": "Nova", "D": "Cinder"}, "answer": ["C"], "multi": false}, {"id": 36, "question": "Linux中行级检索工具是（）", "options": {"A": "grep", "B": "awk", "C": "cut", "D": "location"}, "answer": ["A"], "multi": false}, {"id": 37, "question": "资源池配置管理不支持在创建虚拟机模板时（）", "options": {"A": "指定资源分组", "B": "设置用户口令", "C": "设置调度策略", "D": "设置关机时间"}, "answer": ["D"], "multi": false}, {"id": 38, "question": "在一个tenant中Neutron不能完成以下哪个功能？", "options": {"A": "创建多个子网", "B": "控制Floating IP地址段", "C": "监控虚拟机与外部的网络连接状态", "D": "监控基本的网络状态。"}, "answer": ["C"], "multi": false}, {"id": 39, "question": "以下哪几个选项属于OpenStack社区代码Review的步骤（ ）", "options": {"A": "提交bug或者Blueprint", "B": "创建分支修改代码", "C": "将代码提交给Gerrit", "D": "代码在社区Review"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 40, "question": "以下哪一项属于私有云的优点（）", "options": {"A": "安全性", "B": "成本低", "C": "可扩充性", "D": "运维简单"}, "answer": ["A"], "multi": false}, {"id": 41, "question": "VIM编辑器复制一行的命令是（）", "options": {"A": "y", "B": "yy", "C": "p", "D": "pp"}, "answer": ["B"], "multi": false}, {"id": 42, "question": "云计算可共享的资源包括（）", "options": {"A": "服务器", "B": "存储", "C": "网络", "D": "软件应用"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 43, "question": "以下不属于SAN存储网络中可能会用到的协议的是（）", "options": {"A": "iSCSI", "B": "FC", "C": "FCoE", "D": "FTP"}, "answer": ["D"], "multi": false}, {"id": 44, "question": "以下哪些是Open vswitch的特点（   )", "options": {"A": "支持分布式部署架构", "B": "支持远程管理", "C": "支持多种Hypervisor", "D": "可兼容硬件网卡的加速"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 45, "question": "微软的云计算操作系统是（ ）", "options": {"A": "蓝云", "B": "EC2", "C": "Azure", "D": "OPENSTACK"}, "answer": ["C"], "multi": false}, {"id": 46, "question": "WAF（Web应用防火墙）的关键特性不包括以下哪项（）", "options": {"A": "防SQL注入", "B": "防Webshell上传", "C": "防流量过大", "D": "防盗链"}, "answer": ["C"], "multi": false}, {"id": 47, "question": "启用网页防篡改系统的目的主要有（）", "options": {"A": "实时监测网页状态", "B": "网页被修改时自动恢复", "C": "结合发布服务器完成合法网页内容更新", "D": "在用户请求访问网页时，对网页进行完整性检查"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 48, "question": "下列关于虚拟机迁移的描述错误的是（ ）", "options": {"A": "虚拟机迁移过程中，磁盘数据也需要拷贝", "B": "虚拟机热迁移过程中，用户没有明显的感知", "C": "虚拟机迁移过程中，虚拟机网络属性也会迁移", "D": "虚拟机迁移既可以管理员手动操作，也可以由系统依据策略自动完成"}, "answer": ["A"], "multi": false}, {"id": 49, "question": "任何服务访问openstack service中的资源时，都要访问（）", "options": {"A": "swift", "B": "nova", "C": "glance", "D": "keystone"}, "answer": ["D"], "multi": false}, {"id": 50, "question": "通过虚拟化技术将一台计算机虚拟为多台逻辑计算机，他们之间（）", "options": {"A": "能同时运行多个不同的操作系统", "B": "能相互独立运行", "C": "可以相互通信", "D": "不能相互通信"}, "answer": ["A", "B", "C"], "multi": true}, {"id": 51, "question": "虚拟机负载优化，虚拟机负载过高，触发弹性策略后会（）", "options": {"A": "迁移虚拟机", "B": "重启虚拟机", "C": "启动新虚拟机分担负载", "D": "关闭虚拟机"}, "answer": ["C"], "multi": false}, {"id": 52, "question": "以下关于 CPU Qos 技术的描述中，不正确的是（）", "options": {"A": "通过调整预留值、份额值、上限值，实现对虚拟机 CPU 资源使用的控制", "B": "份额值的作用是保证虚拟机计算能力的下限，即最少能使用多少资源", "C": "份额值的作用是在计算资源不足时，根据多个虚拟机的相对 CPU 份额值进行资源的均衡和调整", "D": "上限值的作用是限制虚拟机最多可使用的资源"}, "answer": ["B"], "multi": false}, {"id": 53, "question": "云操作系统使用云存储可以实现虚拟机哪些功能？", "options": {"A": "自动迁移", "B": "自动开机", "C": "备份", "D": "负载均衡"}, "answer": ["A", "C", "D"], "multi": true}, {"id": 54, "question": "资源池中的高可用性是为了防止（）", "options": {"A": "单点故障", "B": "网络环路", "C": "数据丢失", "D": "虚拟机死机"}, "answer": ["A"], "multi": false}, {"id": 55, "question": "以下哪几项属于云计算分类（）", "options": {"A": "公有云", "B": "私有云", "C": "混合云", "D": "企业云"}, "answer": ["A", "B", "C"], "multi": true}, {"id": 56, "question": "OpenStack中提供网络和地址管理的组件是（）", "options": {"A": "Neutron", "B": "Nova", "C": "Swift", "D": "Cinder"}, "answer": ["A"], "multi": false}, {"id": 57, "question": "如何快速切换到用户John的主目录下？", "options": {"A": "cd @John", "B": "cd #John", "C": "cd &John", "D": "cd ~John"}, "answer": ["D"], "multi": false}, {"id": 58, "question": "linux中，将用户添加到某个组中使用的命令是（）", "options": {"A": "usermod", "B": "groupadd", "C": "usergroup", "D": "userchange"}, "answer": ["B"], "multi": false}, {"id": 59, "question": "OpenStack中Cinder模块不提供以下哪些基本功能（ ）", "options": {"A": "提供基本的块存储管理功能", "B": "通过iSCSI、FC或者NFS对SAN进行虚拟化管理", "C": "提供持久的存储介质，并可以将其在虚拟机之间传递", "D": "提供高性能的文件系统"}, "answer": ["D"], "multi": false}, {"id": 60, "question": "以下哪些是虚拟化带来的好处（）", "options": {"A": "弹性扩展；", "B": "自助按需服务；", "C": "降低成本；", "D": "资源利用率高；"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 61, "question": "LINUX软件主要放在哪个目录下（）", "options": {"A": "/program", "B": "/usr", "C": "/root", "D": "/etc"}, "answer": ["B"], "multi": false}, {"id": 62, "question": "负载均衡的调度算法中,哪种算法实现将新连接随机分发给具体的实服务器？", "options": {"A": "轮询（Round Robin）", "B": "加权轮询（Weighted Round Robin）", "C": "源地址散列（Source Hashing）", "D": "随机（Random）"}, "answer": ["D"], "multi": false}, {"id": 63, "question": "主要开发语言为C或者C++的开源云平台是（）", "options": {"A": "OpenStack", "B": "CloudStack", "C": "Eucalyptus", "D": "OpenNebula"}, "answer": ["C"], "multi": false}, {"id": 64, "question": "以下说法不正确的是（）", "options": {"A": "Trove为用户在OpenStack的环境提供可扩展和可靠的关系和非关系数据库引擎服务", "B": "Glance支持MI、ARI、ISO、QCOW2、Raw、", "C": "Swift负责虚拟机创建、开机、关机、挂起、暂停、调整、迁移、重启、销毁等操作", "D": "Ceilometer为计费和监控以及其它服务提供数据支撑"}, "answer": ["C"], "multi": false}, {"id": 65, "question": "云数据中心为租户提供虚拟防火墙最核心的理由是（）", "options": {"A": "物理防火墙性能不如虚拟防火墙高", "B": "虚拟防火墙允许每个租户为自己的网络创建独立的安全规则", "C": "为多租户提供防火墙服务时，物理防火墙成本比虚拟防火墙高", "D": "为多租户提供防火墙服务时，虚拟防火墙可以支持的租户更多"}, "answer": ["B"], "multi": false}, {"id": 66, "question": "虚拟机给企业带来的好处有（ ）", "options": {"A": "降低应用许可成本", "B": "消除备份需求", "C": "减少物理服务器的数量", "D": "增加了使用复杂度"}, "answer": ["C"], "multi": false}, {"id": 67, "question": "以下哪些选项属于网络虚拟化的优点（）", "options": {"A": "超高性能转发", "B": "租户之间隔离", "C": "网络配置简化", "D": "业务快速下发"}, "answer": ["B", "C", "D"], "multi": true}, {"id": 68, "question": "以下哪些可以蹭强云主机安全性（）", "options": {"A": "云硬盘备份", "B": "DDos流量清洗", "C": "云监控", "D": "弹性伸缩"}, "answer": ["A", "B", "C"], "multi": true}, {"id": 69, "question": "以下哪个Cinder中的子模块直接和存储设备交互（）", "options": {"A": "cinder-api", "B": "cinder-volume", "C": "cinder-scheduler", "D": "cinder的数据库"}, "answer": ["B"], "multi": false}, {"id": 70, "question": "KVM从Linux继承了强大的内存管理功能。（）技术支持允许虚机有效地访问大量内存。", "options": {"A": "非一致性内存访问", "B": "多页面换页技术", "C": "内存抽象", "D": "内存镜像"}, "answer": ["A"], "multi": false}, {"id": 71, "question": "云存储的可靠性体现在哪几个方面（）", "options": {"A": "可配置备份级别", "B": "服务器自动恢复", "C": "容量控制", "D": "无单点故障"}, "answer": ["A", "B", "D"], "multi": true}, {"id": 72, "question": "服务器负载均衡支持的健康检测类型有哪些？", "options": {"A": "TCP", "B": "ICMP", "C": "HTTP", "D": "FTP"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 73, "question": "云计算资源池中哪一项不属于物理层资源（）", "options": {"A": "服务器", "B": "存储", "C": "网络", "D": "虚拟机"}, "answer": ["D"], "multi": false}, {"id": 74, "question": "主要开发语言为Ruby的开源云平台是（）", "options": {"A": "OpenStack", "B": "CloudStack", "C": "Eucalyptus", "D": "OpenNebula"}, "answer": ["D"], "multi": false}, {"id": 75, "question": "Openstack基金会成立于哪一年（）", "options": {"A": "2012", "B": "2013", "C": "2014", "D": "2015"}, "answer": ["A"], "multi": false}, {"id": 76, "question": "OpenStack中提供对象存储的组件是（）", "options": {"A": "Neutron", "B": "Nova", "C": "Swift", "D": "Cinder"}, "answer": ["C"], "multi": false}, {"id": 77, "question": "nova架构的部署特点有以下哪些（）", "options": {"A": "无中心结构", "B": "各组件无本地持久化状态", "C": "可水平扩展", "D": "通过部署多个控制节点实现HA和负载均衡"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 78, "question": "以下需要定制开发或者由厂家支撑开发的开源云平台是（）", "options": {"A": "OpenStack", "B": "CloudStack", "C": "Eucalyptus", "D": "OpenNebula"}, "answer": ["A"], "multi": false}, {"id": 79, "question": "在HyperV中，CSV的缩写是（）", "options": {"A": "Comma Separated Values", "B": "Cluster Shared Volumes", "C": "Carriage Servises Values", "D": "Created Shared Volumes"}, "answer": ["B"], "multi": false}, {"id": 80, "question": "在主流Linux操作系统中，市场占有最高的Linux系统版本是（）", "options": {"A": "REDHAT Linux/Centos", "B": "UBUNTU Liunx", "C": "SUSE Linux", "D": "Slackware Linux"}, "answer": ["A"], "multi": false}, {"id": 81, "question": "多路径软件的设计目的主要是为了实现什么目的（）", "options": {"A": "提高存储设备性能", "B": "屏蔽冗余硬盘", "C": "实现存储虚拟化", "D": "路径的故障切换和恢复"}, "answer": ["B", "D"], "multi": true}, {"id": 82, "question": "云计算的部署模式有哪些？", "options": {"A": "私有云", "B": "公有云", "C": "混合云", "D": "社区云"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 83, "question": "OpenStack从哪个版本增加了glance模板模块（）", "options": {"A": "Austin", "B": "Bexar", "C": "Cactus", "D": "Diablo"}, "answer": ["B"], "multi": false}, {"id": 84, "question": "以下哪种不是CPU虚拟化采用的技术（ ）", "options": {"A": "全虚拟化", "B": "半虚拟化", "C": "硬件辅助虚拟化", "D": "前端/后端模拟虚拟化"}, "answer": ["D"], "multi": false}, {"id": 85, "question": "GRE遂道的缺点是什么（ ）", "options": {"A": "增加了GRE表头会导致本应由交换机硬件来分片的变成由软件来分片", "B": "GRE广播，且遂道将虚拟二层打通了，广播风暴更厉害。", "C": "不用变更底层网络架构重建L2、L3通信", "D": "方便guest 迁移"}, "answer": ["A", "B"], "multi": true}, {"id": 86, "question": "以下哪个属于传统”烟囱式“数据中心的特点（）", "options": {"A": "延迟高", "B": "自动化部署", "C": "按需付费", "D": "资源利用率低"}, "answer": ["D"], "multi": false}, {"id": 87, "question": "LINUX下重命名一个文件，使用的命令是（） ？", "options": {"A": "cp", "B": "rename", "C": "rn", "D": "mv"}, "answer": ["D"], "multi": false}, {"id": 88, "question": "LINUX中，程序后加（）让程序在后台运行?", "options": {"A": ">", "B": "*", "C": "&", "D": "@"}, "answer": ["C"], "multi": false}, {"id": 89, "question": "Horizon会和以下哪个模块发生关系？", "options": {"A": "Nova", "B": "Neutron", "C": "Cinder", "D": "Swift"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 90, "question": "以下哪一个接口协议不属于文件存储（）", "options": {"A": "S3", "B": "CIFS", "C": "NFS", "D": "FTP"}, "answer": ["A"], "multi": false}, {"id": 91, "question": "以下关于openflow说法错误的是（ ）", "options": {"A": "OpenFlow采用XML来实现", "B": "OpenFlow是配置网络交换机的一种协议，采用的过程类似于API（应用程序接口）", "C": "OpenFlow架构中，网络设备厂商是最大的输家", "D": "OpenFlow是一种开源协议"}, "answer": ["C"], "multi": false}, {"id": 92, "question": "以下哪一项为基础设施即服务（）", "options": {"A": "IaaS", "B": "PaaS", "C": "SaaS", "D": "DaaS"}, "answer": ["A"], "multi": false}, {"id": 93, "question": "以下哪一个接口属于对象存储（）", "options": {"A": "CIFS", "B": "NFS", "C": "S3", "D": "iScsi"}, "answer": ["C"], "multi": false}, {"id": 94, "question": "Openstack每（）个月发布一个新版本", "options": {"A": "2", "B": "3", "C": "4", "D": "6"}, "answer": ["D"], "multi": false}, {"id": 95, "question": "OpenStack中提供数据库服务的组件是（）", "options": {"A": "Ceilometer", "B": "Trove", "C": "Cinder", "D": "Heat"}, "answer": ["B"], "multi": false}, {"id": 96, "question": "在 bash shell 环境下，当一命令正在执行时，按下 control-Z 会（）", "options": {"A": "中止前台任务", "B": "给当前文件加上 EOF.", "C": "将前台任务转入后台", "D": "注销当前用户"}, "answer": ["C"], "multi": false}, {"id": 97, "question": "( )是一个虚拟文件系统，是一种内核向进程发送信息的机制", "options": {"A": "/memo", "B": "/kernel", "C": "/proc", "D": "/sys"}, "answer": ["C"], "multi": false}, {"id": 98, "question": "从系统的观点看，当前的存储虚拟化实现方式包括（）", "options": {"A": "主机级虚拟存储", "B": "设备级虚拟存储", "C": "网络级虚拟存储", "D": "完全虚拟存储"}, "answer": ["A", "B", "C"], "multi": true}, {"id": 99, "question": "以下哪一项不属于SaaS层应用（）", "options": {"A": "应用商店", "B": "社交网站", "C": "云网络", "D": "游戏"}, "answer": ["C"], "multi": false}, {"id": 100, "question": "Neutron的结构中包含以下哪些子模块？", "options": {"A": "Neutron-server", "B": "Neutron Proxy", "C": "Neutron Plugin Agent", "D": "L3 agent"}, "answer": ["A", "C", "D"], "multi": true}, {"id": 101, "question": "OpenStack中提供块存储服务的组件是（）", "options": {"A": "Cinder", "B": "Keystone", "C": "Swift", "D": "Neutron"}, "answer": ["A"], "multi": false}, {"id": 102, "question": "以下关于内存虚拟化的说法中不正确的是（）", "options": {"A": "Hypervisor在物理内存和虚拟机内存之间建立映射关系", "B": "内存虚拟化的目的是复用内存以提高资源利用率", "C": "Hypervisor会对内存虚拟化过程进行优化以保证没有性能损失", "D": "常见内存虚拟化技术有内存气泡，零页内存，内存交换"}, "answer": ["C"], "multi": false}, {"id": 103, "question": "执行umask 022，然后创建一个文件，这个文件的权限是（）", "options": {"A": "755", "B": "644", "C": "620", "D": "720"}, "answer": ["B"], "multi": false}, {"id": 104, "question": "以下哪一项属于结构化数据存储（）", "options": {"A": "HIVE提供分部式数据库服务", "B": "文件存储服务", "C": "对象存储", "D": "块存储"}, "answer": ["A"], "multi": false}, {"id": 105, "question": "LINUX使用（） 进行计划任务设置", "options": {"A": "sheduler", "B": "arrange", "C": "crontab", "D": "cron"}, "answer": ["C"], "multi": false}, {"id": 106, "question": "SDN控制器集群的核心技术是（   )", "options": {"A": "主控制器选举", "B": "集群虚拟地址", "C": "全网拓扑获取", "D": "控制器失效应对"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 107, "question": "VIM编辑器粘贴的命令是（）", "options": {"A": "y", "B": "yy", "C": "p", "D": "pp"}, "answer": ["C"], "multi": false}, {"id": 108, "question": "关于TCP滑动窗口在骨干网应用场景中，以下描述不正确的是（ ）", "options": {"A": "能够提高传输效率", "B": "能够提高信道利用率", "C": "能够防止报文段顺序出错", "D": "能够进行流量控制"}, "answer": ["C"], "multi": false}, {"id": 109, "question": "传统IT向云服务转变过程下，哪些模式发生了变化（）", "options": {"A": "申购方式：按业务峰值申购->按需下单，随需变更", "B": "付费方式：按采购量付费->按实际用量付费", "C": "交付方式：长周期安装调测->在线直接使用", "D": "使用方式：向信息部门申请->在线自助"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 110, "question": "LINUX对文件的权限分为（）", "options": {"A": "r", "B": "x", "C": "w", "D": "e"}, "answer": ["A", "B", "C"], "multi": true}, {"id": 111, "question": "负载均衡的调度算法中，哪种算法适合于服务器组中的所有服务器都有相同的软硬件配置并且平均服务请求相对均衡的情况？", "options": {"A": "轮询（Round Robin）", "B": "加权轮询（Weighted Round Robin）", "C": "源地址散列（Source Hashing）", "D": "随机（Random）"}, "answer": ["A"], "multi": false}, {"id": 112, "question": "需要找出 /etc/my.conf 文件属于哪个软件包，可以执行（ ）", "options": {"A": "rpm -qi /etc/my.conf", "B": "rpm -ql /etc/my.conf", "C": "rpm -qf /etc/my.conf", "D": "rpm -q | grep /etc/my.conf"}, "answer": ["C"], "multi": false}, {"id": 113, "question": "云计算通常使用哪种服务器（）", "options": {"A": "X86服务器", "B": "大型机", "C": "小型机", "D": "PC"}, "answer": ["A"], "multi": false}, {"id": 114, "question": "以下对于OpenStack中区域划分的概念描述不正确的是（ ）", "options": {"A": "Region通常可以映射为一个地域的数据中心", "B": "Avaiablity Zone通常对应一组计算节点或者存储节点", "C": "Host Aggregate更倾向于逻辑划分", "D": "Host Aggregate通常可以映射为一个数据中心的一个Rack"}, "answer": ["D"], "multi": false}, {"id": 115, "question": "touch命令的作用有（）", "options": {"A": "创建一个文件", "B": "修改已有文件的时间", "C": "修改文件的属性", "D": "修改文件的权限"}, "answer": ["A", "B"], "multi": true}, {"id": 116, "question": "以下存储应用场景，哪些不适用于swift（ ）", "options": {"A": "与Amazon S3类似的应用场景", "B": "存储glance的镜像文件", "C": "用于网站后台存储图形文件和网页文件", "D": "块存储"}, "answer": ["D"], "multi": false}, {"id": 117, "question": "以下哪一项为平台即服务（）", "options": {"A": "IaaS", "B": "PaaS", "C": "SaaS", "D": "DaaS"}, "answer": ["B"], "multi": false}, {"id": 118, "question": "主要开发语言为java的开源云平台是（）", "options": {"A": "OpenStack", "B": "CloudStack", "C": "Eucalyptus", "D": "OpenNebula"}, "answer": ["C"], "multi": false}, {"id": 119, "question": "关于QoS，以下哪种协议用在MPLS流量工程中建立通路（ ）", "options": {"A": "OSPF", "B": "ISIS", "C": "BGP", "D": "RSVP"}, "answer": ["D"], "multi": false}, {"id": 120, "question": "LVS是Linux Virtual Server的简称，也就是linux虚拟服务器。主要包含哪些部分？", "options": {"A": "负载调度器（loadbalancer）", "B": "服务器池（serverpool）", "C": "后端存储（backend storage）", "D": "Graphic Monitor"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 121, "question": "（）是智能社会的基础", "options": {"A": "云计算", "B": "大数据", "C": "人工智能", "D": "区块链"}, "answer": ["A"], "multi": false}, {"id": 122, "question": "以下哪一项属于公有云的优点（）", "options": {"A": "成本低", "B": "安全性", "C": "可靠性", "D": "低延迟"}, "answer": ["A"], "multi": false}, {"id": 123, "question": "在MPLS网络中，不可以分发标签的协议有（ ）", "options": {"A": "RSVP", "B": "LDP", "C": "MBGP", "D": "ISIS"}, "answer": ["D"], "multi": false}, {"id": 124, "question": "以下哪一项不是实现云计算资源池的关键因素（）", "options": {"A": "统一管理", "B": "成本控制", "C": "虚拟化", "D": "电源和冷却"}, "answer": ["B"], "multi": false}, {"id": 125, "question": "VxLAN的英语原文是（   )", "options": {"A": "Virtual eXtensible Local Area Network", "B": "Virtual eXtensible Large Area Network", "C": "Virtual Xerox Local Area Network", "D": "Vertical Xerox Large Area Network"}, "answer": ["A"], "multi": false}, {"id": 126, "question": "以下哪些属于资源池监控管理（）", "options": {"A": "多面板视图", "B": "邮件告警功能", "C": "集中事件平台", "D": "存储自动化"}, "answer": ["A", "B", "C"], "multi": true}, {"id": 127, "question": "以下哪一项属于混合云的优点（）", "options": {"A": "可靠性", "B": "架构简单", "C": "运维简单", "D": "可扩充性"}, "answer": ["D"], "multi": false}, {"id": 128, "question": "如何删除一个非空子目录/tmp？", "options": {"A": "del /tmp/*", "B": "rm -rf /tmp", "C": "rm -Ra /tmp/*", "D": "rm -rf /tmp/*"}, "answer": ["B"], "multi": false}, {"id": 129, "question": "IO虚拟化是计算虚拟化的一个重要分支，以下哪个技术属于IO虚拟化技术（）", "options": {"A": "SR-IOV", "B": "DPDK", "C": "OVS", "D": "NUMA"}, "answer": ["A"], "multi": false}, {"id": 130, "question": "cinder后端存储实现（）", "options": {"A": "LVM", "B": "CEPH", "C": "Gluster", "D": "KVM"}, "answer": ["A", "B", "C"], "multi": true}, {"id": 131, "question": "以下哪些属于高可用集群模式（）", "options": {"A": "Active/Active", "B": "Active/Passive", "C": "N+M", "D": "N+1"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 132, "question": "Keystone中用于确认用户身份的凭证是（）", "options": {"A": "Credentials", "B": "Authentication", "C": "Endpoint", "D": "Token"}, "answer": ["A"], "multi": false}, {"id": 133, "question": "LINUX中将输出结果追加到某一个文件，使用（）", "options": {"A": "|", "B": ">", "C": ">>", "D": "->"}, "answer": ["C"], "multi": false}, {"id": 134, "question": "Linux中显示一个文本文件内容，使用( ）命令", "options": {"A": "type", "B": "list", "C": "show", "D": "cat"}, "answer": ["D"], "multi": false}, {"id": 135, "question": "关于vCPU和pCPU核心之间的关系，下列描述错误的是（）", "options": {"A": "vCPU是虚拟CPU，是从pCPU核心分配的一个时间片抽象而来", "B": "vCPU和pCPU核心必须一对一静态绑定，否则虚拟机无法运行", "C": "虚拟机必须通过Hypervisor调度的方式间接的使用pCPU计算能力", "D": "虚拟机有自行调度Hypervisor已分配给它的vCPU的权限"}, "answer": ["B"], "multi": false}, {"id": 136, "question": "资源池快速部署是通过什么创建虚拟机的（）", "options": {"A": "镜像模板", "B": "优盘", "C": "硬盘", "D": "操作系统安装盘"}, "answer": ["A"], "multi": false}, {"id": 137, "question": "以下哪个是私有云计算基础架构的基石（ ）", "options": {"A": "虚拟化", "B": "分布式", "C": "并行", "D": "集中式"}, "answer": ["A"], "multi": false}, {"id": 138, "question": "VIM编辑器删除一行的命令是（）", "options": {"A": "y", "B": "yy", "C": "d", "D": "dd"}, "answer": ["D"], "multi": false}, {"id": 139, "question": "相比物理服务器，以下哪一项不是虚拟机的优势（）", "options": {"A": "硬件解耦", "B": "超高性能", "C": "封装为文件", "D": "弹性扩展"}, "answer": ["B"], "multi": false}, {"id": 140, "question": "虚拟化技术是可以让一台物理主机建立与执行（）个虚拟化环境的软件", "options": {"A": "一", "B": "二", "C": "多个", "D": "以上全是"}, "answer": ["D"], "multi": false}, {"id": 141, "question": "在下列命令中,不能显示文本文件内容的命令是（）", "options": {"A": "more", "B": "less", "C": "tail", "D": "join"}, "answer": ["D"], "multi": false}, {"id": 142, "question": "传统数据中心的成本支出结构中“看不见的花费“用于现有设施维护和人员支出占比多少？", "options": {"A": "10%", "B": "30%", "C": "50%", "D": "70%"}, "answer": ["D"], "multi": false}, {"id": 143, "question": "在云计算项目中，与运营商有竞争关系的是下面哪几家公司（）", "options": {"A": "阿里云", "B": "用友", "C": "金蝶", "D": "AWS"}, "answer": ["A", "D"], "multi": true}, {"id": 144, "question": "ls 命令是Linux 命令中使用频率最高者之一，能够列出当前目录下的所有文件和目录（隐藏文件除外）的命令是（）", "options": {"A": "ls", "B": "ls -l", "C": "ls -r", "D": "ls -d"}, "answer": ["A"], "multi": false}, {"id": 145, "question": "OpenStack中提供测量服务的组件是（）", "options": {"A": "Cinder", "B": "Horizon", "C": "Ceilometer", "D": "Neutron"}, "answer": ["C"], "multi": false}, {"id": 146, "question": "云平台上的云主机之间默认不存在哪种资源的隔离（）", "options": {"A": "内存隔离", "B": "I/O隔离", "C": "网络隔离", "D": "以上都有"}, "answer": ["D"], "multi": false}, {"id": 147, "question": "资源池安全管理中，系统账户身份周期管理包括（）", "options": {"A": "复制", "B": "创建", "C": "修改", "D": "删除"}, "answer": ["A"], "multi": false}, {"id": 148, "question": "Neutron为OpenStack其他服务提供网络连接服务，如可以（）", "options": {"A": "定义Network", "B": "配置DCHP", "C": "增删Router", "D": "增删虚拟机"}, "answer": ["A", "B", "C"], "multi": true}, {"id": 149, "question": "以下关于hyperV说法哪些是正确的（）", "options": {"A": "没有数量限制的并发实时迁移 实时存储迁移", "B": "Hyper-V的VHDX格式打破了旧的VHD的2TB限制", "C": "Hpyer-V Replica提供异步、统一应用的虚拟机复制功能", "D": "快照合并只能在虚拟机离线时执行"}, "answer": ["A", "B", "C"], "multi": true}, {"id": 150, "question": "以下哪一项不属于资源运营管理平台架构（）", "options": {"A": "系统监控平台", "B": "应用平台", "C": "运营服务平台", "D": "资源管理平台"}, "answer": ["B"], "multi": false}, {"id": 151, "question": "资源池管理与运营功能包括哪些（）", "options": {"A": "资源池管理", "B": "容量管理", "C": "安全管理", "D": "用户管理"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 152, "question": "虚拟主机的安全防护必须提供对于虚拟主机的（ ）", "options": {"A": "安全隔离", "B": "访问控制", "C": "安全监控", "D": "安全漏洞加固"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 153, "question": "以下哪些属于开源虚拟化软件 （）", "options": {"A": "openstack", "B": "cas", "C": "VMWare vsphere", "D": "FusionCompute"}, "answer": ["A"], "multi": false}, {"id": 154, "question": "CENTOS默认SHELL为（）", "options": {"A": "ASH", "B": "Bash", "C": "SH", "D": "KSH"}, "answer": ["B"], "multi": false}, {"id": 155, "question": "keystone类似一个服务总线或者说是整个openstack框架的（）", "options": {"A": "镜像库", "B": "网络控制", "C": "存储库", "D": "注册表"}, "answer": ["D"], "multi": false}, {"id": 156, "question": "Cinder-api接受API请求，并将其路由到（）执行", "options": {"A": "cinder-api", "B": "cinder-volume", "C": "cinder-scheduler", "D": "cinder-backup"}, "answer": ["B"], "multi": false}, {"id": 157, "question": "（）是用于管理虚拟化平台的开源的API", "options": {"A": "Libvirt", "B": "KVM", "C": "Xen", "D": "QEMU"}, "answer": ["A"], "multi": false}, {"id": 158, "question": "云数据中心的“区域”是根据什么因素进行划分的（）", "options": {"A": "地理位置和网络时延", "B": "服务器机柜和集群", "C": "基于VDC和VPC划分", "D": "存储可靠性集群"}, "answer": ["A"], "multi": false}, {"id": 159, "question": "高可用集群组件中，哪个组件是用来获取本地某个资源的状态，并实现本地资源的管理（）", "options": {"A": "Irmd组件", "B": "pengine组件", "C": "stonithd组件", "D": "ccm组件"}, "answer": ["A"], "multi": false}, {"id": 160, "question": "如果您想列出当前目录以及子目录下所有扩展名为“.txt”的文件,那么您可以使用的命令是（）", "options": {"A": "ls *.txt", "B": "find –name “.txt\"", "C": ".ls –d .txt", "D": "find . “.txt”"}, "answer": ["B"], "multi": false}, {"id": 161, "question": "申请开通弹性云服务器一般需要多长时间（）", "options": {"A": "几秒钟", "B": "几分钟", "C": "十几分钟", "D": "几小时"}, "answer": ["B"], "multi": false}, {"id": 162, "question": "当节点（一个或多个）和另外的节点互相接收不到对方心跳信息时，如何决定哪一部分节点是正常运行的，哪一部分是需要隔离的呢？", "options": {"A": "通过法定票数决定", "B": "管理员决定", "C": "用户决定", "D": "管理服务器决定"}, "answer": ["A"], "multi": false}, {"id": 163, "question": "实现云端资源池的技术保证包括（）", "options": {"A": "管理自动化", "B": "资源动态分配", "C": "云计算安全管理", "D": "基础资源共享"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 164, "question": "虚拟化技术能实现硬件资源的（）", "options": {"A": "动态分配", "B": "跨系统共享", "C": "提高资源利用率", "D": "降低成本"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 165, "question": "Openstack镜像不能存到哪种存储中（）", "options": {"A": "HDFS", "B": "S3直接存储", "C": "HTTP（只读）", "D": "本地文件系统"}, "answer": ["A"], "multi": false}, {"id": 166, "question": "高可用集群衡量标准中，高可用级别3个9，其年度停机时间为（）", "options": {"A": "87.6小时", "B": "8.8小时", "C": "53分钟", "D": "5分钟"}, "answer": ["B"], "multi": false}, {"id": 167, "question": "GRE隧道的好处有哪些（ ）", "options": {"A": "不用变更底层网络架构重建L2、L3通信", "B": "实现不同host之间网络guest互通", "C": "方便guest 迁移", "D": "支持网络数量扩大"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 168, "question": "LINUX的LOG信息默认存放位置是（ ）", "options": {"A": "/var/log", "B": "/tmp/log", "C": "/etc/log", "D": "/home/log"}, "answer": ["A"], "multi": false}, {"id": 169, "question": "以下哪一项不属于资源池监控管理（）", "options": {"A": "服务器监控", "B": "审计管理", "C": "虚拟平台监控", "D": "管理界面"}, "answer": ["B"], "multi": false}, {"id": 170, "question": "CDN基于哪种原理实现？", "options": {"A": "分布式缓存", "B": "集中式缓存", "C": "反向代理", "D": "正向代理"}, "answer": ["C"], "multi": false}, {"id": 171, "question": "Openstack架构异构能力强，异构hypervisor包括（）", "options": {"A": "KVM", "B": "XEN", "C": "Vmware", "D": "LXC"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 172, "question": "Libvirt提供了对（）的管理", "options": {"A": "虚拟化客户机", "B": "虚拟化网络", "C": "虚拟化存储", "D": "裸金属架构"}, "answer": ["A", "B", "C"], "multi": true}, {"id": 173, "question": "以下哪些属于资源池的自动化管理（）", "options": {"A": "存储自动化", "B": "网络自动化", "C": "软件自动化部署", "D": "虚拟机自动化部署"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 174, "question": "以下哪些功能是keystone模块所包含的（）", "options": {"A": "负责身份验证、服务规则和令牌管理。", "B": "模块通过keystone以服务的形式将自己注册为endpoint", "C": "访问目标服务需要经过keystone的身份验证。", "D": "对模板访问权限的控制"}, "answer": ["A", "B", "C"], "multi": true}, {"id": 175, "question": "一台Linux服务器运行的服务包括SMTP、POP3、IMAP和SNMP，对其进行端口扫描，发现其开放的TCP端口有（）", "options": {"A": "A-25", "B": "B-110", "C": "C-21", "D": "D-143"}, "answer": ["A", "B", "D"], "multi": true}, {"id": 176, "question": "下列说法正确的是（ ）", "options": {"A": "Hyper-V通过一种称为分区的方式实现隔离", "B": "分区本身可以直接访问物理处理器", "C": "驱动程序都存在于各个分区的底层", "D": "分区之间是不同通信的"}, "answer": ["A"], "multi": false}, {"id": 177, "question": "与其余三个开源云平台API生态系统不一样的是（）", "options": {"A": "OpenStack", "B": "CloudStack", "C": "Eucalyptus", "D": "OpenNebula"}, "answer": ["A"], "multi": false}, {"id": 178, "question": "云计算是一种（）的模式，这种模式提供可用的、便捷的、按需的网络访问，进入可配置的计算资源共享池。", "options": {"A": "按营业收入付费", "B": "按机房空间付费", "C": "按硬件价格付费", "D": "按使用量付费"}, "answer": ["D"], "multi": false}, {"id": 179, "question": "关于Docker和Kubernetes的功能描述中正确的是（）", "options": {"A": "Docker创建容器，Kubernetes管理运行容器的物理主机", "B": "Docker创建虚拟机，Kubernetes管理运行虚拟机的物理机", "C": "Docker创建容器，Kubernetes管理运行容器的网络设备", "D": "Docker创建虚拟机，Kubernetes管理物理主机"}, "answer": ["A"], "multi": false}, {"id": 180, "question": "高可用的衡量标准，通常用（）来度量系统的可维护性", "options": {"A": "MTTF", "B": "MTTR", "C": "MTTP", "D": "MTTS"}, "answer": ["B"], "multi": false}, {"id": 181, "question": "Libvirt支持的虚拟化类型包括（）", "options": {"A": "KVM/QEMU", "B": "VMware ESX", "C": "IBM PowerVM", "D": "Microsoft HyperV"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 182, "question": "资源池运行支持中，备份管理与灾难恢复，支持虚拟机（）", "options": {"A": "备份", "B": "快照", "C": "克隆", "D": "修改"}, "answer": ["D"], "multi": false}, {"id": 183, "question": "以下哪个不属于SaaS应用（）", "options": {"A": "企业网盘", "B": "桌面云应用", "C": "云备份", "D": "弹性云主机"}, "answer": ["D"], "multi": false}, {"id": 184, "question": "以下哪些是OpenStack的组件（）", "options": {"A": "Glance", "B": "Keystone", "C": "Horizon", "D": "Heat"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 185, "question": "LINUX是一种开源软件，遵循（）协议", "options": {"A": "GNU", "B": "GPL", "C": "APARCH", "D": "FREE BSD"}, "answer": ["B"], "multi": false}, {"id": 186, "question": "keystone用户可分为哪两类（）", "options": {"A": "admin", "B": "role", "C": "member", "D": "project"}, "answer": ["A", "C"], "multi": true}, {"id": 187, "question": "以下哪一项不属于云存储系统的优点（）", "options": {"A": "扩展性", "B": "易用性", "C": "负载均衡", "D": "集中性"}, "answer": ["D"], "multi": false}, {"id": 188, "question": "如果客户对主机的性能要求非常高且可以接受高费用，则以下哪种配置最适合该客户？", "options": {"A": "弹性云主机+高容量云硬盘", "B": "弹性云主机+高性能云硬盘", "C": "裸金属服务器+高容量固态硬盘", "D": "裸金属服务器+高性能固态硬盘"}, "answer": ["D"], "multi": false}, {"id": 189, "question": "在一个OpenStack的生产环境中，以下哪些部署规范需要考虑？", "options": {"A": "控制网络，计算网络，存储网络分离的网络架构", "B": "控制节点的HA功能", "C": "存储节点和网络节点的分布式部署", "D": "采用状态分离的架构"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 190, "question": "虚拟化技术提高生产力效率体现在（）", "options": {"A": "动态修补", "B": "瞬间调配", "C": "内置高可用性", "D": "自动进行灾难恢复"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 191, "question": "OpenStack的重要构成部分包括( )", "options": {"A": "Nova - 计算服务", "B": "Swift - 存储服务", "C": "Glance - 镜像服务", "D": "Keystone - 认证服务"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 192, "question": "yum客户端配置文件目录在(  )", "options": {"A": "/etc/yum.repos.d", "B": "/etc/yum.repos", "C": "/var/yum.repos.d", "D": "/var/yum.repos"}, "answer": ["A"], "multi": false}, {"id": 193, "question": "以下不属于云计算中常见的虚拟化技术的是（）", "options": {"A": "业务虚拟化", "B": "计算虚拟化", "C": "网络虚拟化", "D": "存储虚拟化"}, "answer": ["A"], "multi": false}, {"id": 194, "question": "以下哪一项不属于平台服务组件（）", "options": {"A": "资源池管理", "B": "分部署数据库系统", "C": "数据库同步分发工具", "D": "分部署虚拟文件系统"}, "answer": ["A"], "multi": false}, {"id": 195, "question": "Openstack中负责调度云主机创建任务的组件是（）", "options": {"A": "Nova", "B": "Cinder", "C": "Neutron", "D": "Glance"}, "answer": ["A"], "multi": false}, {"id": 196, "question": "以下哪个项目在购买弹性云服务器时不用关注（）", "options": {"A": "CPU核数", "B": "内存大小", "C": "硬盘大小和IO", "D": "以上都需要"}, "answer": ["D"], "multi": false}, {"id": 197, "question": "关于OpenStack，以下说法不正确的有（）", "options": {"A": "代表云操作系统的方向。与管理有限集的核心和本地资源不同，OpenStack 管理的是包含计算和存储资源的庞大的服务器网络，以及将它们连接在一起的虚拟网络胶", "B": "OpenStack是一个开源的云计算管理平台项目", "C": "类似于hadoop，也是一种云计算平台", "D": "OpenStack是IaaS(基础设施即服务)组件，让任何人都可以自行建立和提供云端运算服务。"}, "answer": ["C"], "multi": false}, {"id": 198, "question": "以下哪项不是公有云的特点()", "options": {"A": "高可控", "B": "更少的管理开销", "C": "更少的初期费用", "D": "部队基础设施进行设置"}, "answer": ["A"], "multi": false}, {"id": 199, "question": "以下哪一项属于资源池安全管理（）", "options": {"A": "服务器监控", "B": "访问控制管理", "C": "存储自动化", "D": "虚拟机自动化部署"}, "answer": ["B"], "multi": false}, {"id": 200, "question": "如果要识别LINUX某个文件的类型，使用的命令是（）", "options": {"A": "type", "B": "cat", "C": "file", "D": "what"}, "answer": ["C"], "multi": false}, {"id": 201, "question": "当在一台hyper-V宿主机上根据模板创建了一台新的安装有CentOS操作系统的虚拟机之后，按以下哪种磁盘类型设置的虚拟机vhd或者vhdx文件占用的磁盘空间最小（）", "options": {"A": "动态扩展虚拟硬盘", "B": "固定大小虚拟硬盘", "C": "差异虚拟硬盘", "D": "固态硬盘"}, "answer": ["C"], "multi": false}, {"id": 202, "question": "以下哪些选项是Hypervisor（）", "options": {"A": "KVM", "B": "Nova", "C": "Xen", "D": "Hyper-V"}, "answer": ["A", "C", "D"], "multi": true}, {"id": 203, "question": "以下哪一项不属于云计算安全管理（）", "options": {"A": "数据安全", "B": "数据合法性审计", "C": "访问安全", "D": "运维管理规范"}, "answer": ["D"], "multi": false}, {"id": 204, "question": "负载均衡的调度算法中,哪种算法实现新连接的源IP地址进行散列（HASH）的结果来决定将该新连接发文哪个实服务器？", "options": {"A": "轮询（Round Robin）", "B": "加权轮询（Weighted Round Robin）", "C": "源地址散列（Source Hashing）", "D": "随机（Random）"}, "answer": ["C"], "multi": false}, {"id": 205, "question": "关于虚拟机纵向和横向流量相关的安全风险，以下说法错误的是（）", "options": {"A": "纵向流量的特点是会经过外置的硬件安全防护层，这些流量的防护和传统安全防护手段相似", "B": "横向流量的安全问题是在虚拟化环境下产生的特有问题，因此不能采取常规安全硬件来解决", "C": "纵向流量一定不会是从虚拟机到虚拟机之间的，因此用网络安全设备可以充分的保证其安全", "D": "不同VM之间的横向流量将直接在服务器内部实现交换，导致网络安全设备无法进行检测和过滤"}, "answer": ["C"], "multi": false}, {"id": 206, "question": "虚拟化将（）整合到一起，旨在安全地实现更高的效率", "options": {"A": "服务器", "B": "机房", "C": "存储", "D": "网络"}, "answer": ["A", "C", "D"], "multi": true}, {"id": 207, "question": "以下关于endpoint说法错误的是（）", "options": {"A": "endpoint分为三类", "B": "不同的region可以用相同的endpoint", "C": "openstack内部组件间互相通信使用Port：5000", "D": "管理员用户使用Port：35357"}, "answer": ["B"], "multi": false}, {"id": 208, "question": "关于Openstack架构说法正确的是（）", "options": {"A": "北向标准Openstack API，生态系统丰富", "B": "异构接入能力强", "C": "不易增加新模块和服务", "D": "参与者众多，发展迅猛"}, "answer": ["A", "B", "D"], "multi": true}, {"id": 209, "question": "相对于TCP,UDP的优势为？", "options": {"A": "开销较小", "B": "可靠传输", "C": "拥塞控制", "D": "流量控制"}, "answer": ["A"], "multi": false}, {"id": 210, "question": "Token是一串数字字符串，在keystone中主要是引入令牌机制来保护用户对资源的访问，同时引入（），对令牌加以保护", "options": {"A": "PKI", "B": "PKIZ", "C": "fernet", "D": "UUID"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 211, "question": "以下哪些属于云计算解决方案（）", "options": {"A": "企业云", "B": "灾备云", "C": "教育云", "D": "政务云"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 212, "question": "大部分SD-WAN高质量网络的解决方案实际上是一种承载在原来WAN网络上的（  ）解决方案，通过叠加网络“隧道”。", "options": {"A": "undelay", "B": "transit", "C": "relay", "D": "overlay"}, "answer": ["D"], "multi": false}, {"id": 213, "question": "rm命令下使用（）参数可以删除目录下的文件和子目录", "options": {"A": "-r", "B": "-a", "C": "-p", "D": "-v"}, "answer": ["A"], "multi": false}, {"id": 214, "question": "Linux下查询内存使用情况的常用命令有（）", "options": {"A": "free", "B": "vmstat", "C": "top", "D": "cat /proc/meminfo"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 215, "question": "root用户的ID号为（）", "options": {"A": "-1", "B": "0", "C": "1", "D": "999"}, "answer": ["B"], "multi": false}, {"id": 216, "question": "OpenStack中提供部署编排的组件是（）", "options": {"A": "Cinder", "B": "Horizon", "C": "Heat", "D": "Neutron"}, "answer": ["C"], "multi": false}, {"id": 217, "question": "mkdir命令使用参数（）可以递归创建目录。", "options": {"A": "-r", "B": "-a", "C": "-p", "D": "-v"}, "answer": ["C"], "multi": false}, {"id": 218, "question": "OpenStack中提供镜像的组件是（）", "options": {"A": "Neutron", "B": "Nova", "C": "Swift", "D": "glance"}, "answer": ["D"], "multi": false}, {"id": 219, "question": "利用云平台将硬件资源进行整合，可以提供哪些功能（）", "options": {"A": "弹性计算", "B": "云存储", "C": "中央控制台", "D": "基于云的应用平台"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 220, "question": "下面哪项组件不属于开源大数据平台中的组件（）", "options": {"A": "Openstack", "B": "HDFS", "C": "Yarn", "D": "Storm"}, "answer": ["A"], "multi": false}, {"id": 221, "question": "服务器虚拟化领域主流开源项目包括（）", "options": {"A": "Xen", "B": "KVM", "C": "Hyper-V", "D": "vmware"}, "answer": ["A", "B"], "multi": true}, {"id": 222, "question": "keystone user验证的时候必须带有（）", "options": {"A": "acl", "B": "project", "C": "role", "D": "prefix"}, "answer": ["B"], "multi": false}, {"id": 223, "question": "openstack提供Block Storge Service的是（）", "options": {"A": "cinder", "B": "nova", "C": "glance", "D": "keystone"}, "answer": ["A"], "multi": false}, {"id": 224, "question": "云计算的接入方式有哪些（）", "options": {"A": "公网接入", "B": "VPN接入", "C": "云专线接入", "D": "网线接入"}, "answer": ["A", "B", "C"], "multi": true}, {"id": 225, "question": "企业传统IT基础设施架构在支撑企业高效运作方面已力不从心，迫切呼唤架构变革的到来。以下哪项不是其主要原因？", "options": {"A": "业务上线慢", "B": "TCO居高不下", "C": "关键应用性能受限于IO瓶颈", "D": "网络带宽太低"}, "answer": ["D"], "multi": false}, {"id": 226, "question": "云计算中什么资源是要用户自己管理的（）", "options": {"A": "虚拟机", "B": "机房", "C": "服务器", "D": "存储设备"}, "answer": ["A"], "multi": false}, {"id": 227, "question": "以下哪一种行为不仅不会加固宿主机系统还会导致更严重的安全风险？", "options": {"A": "关闭SELinux，以免影响安装某些特殊应用程序", "B": "关闭不必要的服务，例如Telnet和FTP服务", "C": "详细设定和控制文件和目录的访问权限", "D": "修改系统用户或应用程序用户的默认密码"}, "answer": ["A"], "multi": false}, {"id": 228, "question": "业界比较认可的SDN特征属性是（ ）", "options": {"A": "控制面与转发面分离", "B": "开放的可编程接口", "C": "集中化的网络控制", "D": "网络业务的自动化应用程序控制"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 229, "question": "Glance管理和提供镜像服务，支持多种镜像格式，其中光盘存档格式是（）", "options": {"A": "raw", "B": "vmdk", "C": "iso", "D": "aki"}, "answer": ["C"], "multi": false}, {"id": 230, "question": "虚拟机执行快照后，什么的剩余空间会减少？", "options": {"A": "快照LUN", "B": "CAN操作系统分区", "C": "数据存储", "D": "USB存储"}, "answer": ["B"], "multi": false}, {"id": 231, "question": "以下哪些为云计算运营商（）", "options": {"A": "amazon", "B": "facebook", "C": "Microsoft", "D": "Google"}, "answer": ["A", "C", "D"], "multi": true}, {"id": 232, "question": "一套最基本的可运行的OpenStack环境，可以不包括以下哪项（）", "options": {"A": "Glance", "B": "Keystone", "C": "Cinder", "D": "Vmware"}, "answer": ["D"], "multi": false}, {"id": 233, "question": "April 2012，（）加入Openstack", "options": {"A": "IBM", "B": "H3C", "C": "HP", "D": "RedHat"}, "answer": ["A", "C", "D"], "multi": true}, {"id": 234, "question": "云计算为企业带来的价值包括以下哪些？（）", "options": {"A": "省钱", "B": "省时", "C": "省人", "D": "安全"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 235, "question": "资源池安全管理给系统提供哪三个层次的授权（）", "options": {"A": "系统层", "B": "虚拟化层", "C": "账户层", "D": "服务实例层"}, "answer": ["A", "C", "D"], "multi": true}, {"id": 236, "question": "使用（） 可查看LINUX中运行的进程和启动进程的所使用的命令", "options": {"A": "ps -a", "B": "ps -A", "C": "ps -ef", "D": "ps -l"}, "answer": ["C"], "multi": false}, {"id": 237, "question": "普通用户要切换到管理员权限运行，可使用（）命令", "options": {"A": "sudo", "B": "su", "C": "cdo", "D": "pdo"}, "answer": ["A"], "multi": false}, {"id": 238, "question": "在yum 工具的常用操作中，列出名字以httpd 开头的包的操作是（）", "options": {"A": "yum list ‘httpd*‘", "B": "yum info ‘httpd*‘", "C": "yum install ‘httpd*‘", "D": "yum remove ‘httpd*‘"}, "answer": ["A"], "multi": false}, {"id": 239, "question": "LINUX操作系统汇中，（）负责硬件管理", "options": {"A": "KERNEL", "B": "SHELL", "C": "应用程序", "D": "SYSTEMD"}, "answer": ["A"], "multi": false}, {"id": 240, "question": "服务器虚拟化技术主要有以下（）功能", "options": {"A": "分区", "B": "隔离", "C": "封装", "D": "相对于硬件独立"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 241, "question": "以下哪些是GRE隧道的特点（ ）", "options": {"A": "跨不同网络实现二次IP通信", "B": "L3上面包装L3", "C": "点对多点隧道", "D": "封装在IP报文中"}, "answer": ["A", "B", "D"], "multi": true}, {"id": 242, "question": "虚拟机负载优化会优先将虚拟机创建到哪个Hypervisor（）", "options": {"A": "CPU最多的", "B": "内存最大的", "C": "负载最低的", "D": "负载最高的"}, "answer": ["C"], "multi": false}, {"id": 243, "question": "Hypervisor安装在硬件层上来直接管理硬件，如（）", "options": {"A": "VMWare ESXI", "B": "微软", "C": "思杰KVM", "D": "XEN"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 244, "question": "Linux中列级检索工具是（）", "options": {"A": "grep", "B": "awk", "C": "cut", "D": "location"}, "answer": ["B"], "multi": false}, {"id": 245, "question": "高可用的衡量标准，通常用（）来度量系统的可靠性", "options": {"A": "MTTF", "B": "MTTR", "C": "MTTP", "D": "MTTS"}, "answer": ["A"], "multi": false}, {"id": 246, "question": "以下哪些是LINUX的发行版本", "options": {"A": "POSIX", "B": "REDHAT", "C": "SUSE", "D": "UBUNTU"}, "answer": ["B", "C", "D"], "multi": true}, {"id": 247, "question": "高可用集群衡量标准中，高可用级别5个9，其年度停机时间为（）", "options": {"A": "87.6小时", "B": "8.8小时", "C": "53分钟", "D": "5分钟"}, "answer": ["D"], "multi": false}, {"id": 248, "question": "云服务商通常为云用户提供哪些类型的镜像？", "options": {"A": "定制化镜像", "B": "共有镜像", "C": "私有镜像", "D": "共享镜像"}, "answer": ["B", "C", "D"], "multi": true}, {"id": 249, "question": "以下关于Openstack安装先决条件描述正确的是（）", "options": {"A": "物理连接需通畅", "B": "服务器不需要支持虚拟化", "C": "服务器需要大量内存和基本存储设备", "D": "liunx操作系统，Centos7/RHEL7以上操作系统"}, "answer": ["A", "C", "D"], "multi": true}, {"id": 250, "question": "云计算资源池中资源监控系统包括哪几项（）", "options": {"A": "统一监控", "B": "运维自动化", "C": "IT运维管理流程", "D": "服务器安全"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 251, "question": "以下哪一项不属于虚拟机生命周期管理（）", "options": {"A": "创建虚拟机", "B": "分配宿主机", "C": "关闭虚拟机", "D": "删除虚拟机"}, "answer": ["C"], "multi": false}, {"id": 252, "question": "高可用集群衡量标准中，高可用级别4个9，其年度停机时间为（）", "options": {"A": "87.6小时", "B": "8.8小时", "C": "53分钟", "D": "5分钟"}, "answer": ["C"], "multi": false}, {"id": 253, "question": "Keystone中用于用于分配操作的权限是（）", "options": {"A": "user", "B": "project", "C": "role", "D": "service"}, "answer": ["C"], "multi": false}, {"id": 254, "question": "Openstack的应用场景有以下（）", "options": {"A": "分布式数据处理", "B": "对象存储", "C": "SDN", "D": "CDN"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 255, "question": "当客户需要执行openstack上虚机相关的操作时，发送REST API请求，这里的客户包括（）", "options": {"A": "终端用户", "B": "命令行", "C": "openstack其他组件", "D": "管理员"}, "answer": ["A", "B", "C"], "multi": true}, {"id": 256, "question": "vim退出不保存的命令是（）", "options": {"A": ":q", "B": ":w", "C": ":wq", "D": ":q!"}, "answer": ["D"], "multi": false}, {"id": 257, "question": "SDN网络架构可以分成哪三层（   )", "options": {"A": "应用层", "B": "协议层", "C": "控制层", "D": "转发层"}, "answer": ["A", "C", "D"], "multi": true}, {"id": 258, "question": "软件定义网络（SDN）的核心理念是（   )", "options": {"A": "控制平面和转发平面的分离、支持全局的软件控制", "B": "控制平面和转发平面的分离、支持局部的软件控制", "C": "控制平面和转发平面的整合、支持局部的软件控制", "D": "控制平面和转发平面的整合、支持全局的软件控制"}, "answer": ["A"], "multi": false}, {"id": 259, "question": "资源池安全管理中，哪一个不是系统提供的管理角色（）", "options": {"A": "超级用户", "B": "管理员", "C": "账户负责人", "D": "普通用户"}, "answer": ["A"], "multi": false}, {"id": 260, "question": "服务器负载均衡是数据中心最常见的组网模型，依据转发方式，分为哪三种方式？", "options": {"A": "NAT方式", "B": "DR方式", "C": "防火墙转发方式", "D": "ARP欺骗方式"}, "answer": ["A", "B", "C"], "multi": true}, {"id": 261, "question": "虚拟桌面常见的应用场景包括\t（）", "options": {"A": "客服坐席、营业厅", "B": "办公应用", "C": "网管终端", "D": "3D-图形设计"}, "answer": ["A", "B", "C"], "multi": true}, {"id": 262, "question": "centos的软件包管理使用( )格式", "options": {"A": "rpm", "B": "pak", "C": "deb", "D": "rpf"}, "answer": ["A"], "multi": false}, {"id": 263, "question": "LINUX管道符是（）", "options": {"A": "|", "B": ">", "C": ">>", "D": "->"}, "answer": ["A"], "multi": false}, {"id": 264, "question": "Keystone可以给用户制定（），是user获得role对应的操作权限", "options": {"A": "acl", "B": "project", "C": "role", "D": "prefix"}, "answer": ["C"], "multi": false}, {"id": 265, "question": "负载均衡的调度算法中，哪种算法能确保高性能的服务器得到更多的使用率，避免低性能的服务器负载过重？", "options": {"A": "轮询（Round Robin）", "B": "加权轮询（Weighted Round Robin）", "C": "源地址散列（Source Hashing）", "D": "随机（Random）"}, "answer": ["B"], "multi": false}, {"id": 266, "question": "liunx中，用户信息存储于（）文件内", "options": {"A": "/etc/passwd", "B": "/etc/user", "C": "/etc/uses", "D": "/etc/username"}, "answer": ["A"], "multi": false}, {"id": 267, "question": "以下特性哪个不是swift的设计原则（ ）", "options": {"A": "数据的持久性", "B": "负责的算法以提高存储效率", "C": "对称的系统架构", "D": "无单点故障"}, "answer": ["B"], "multi": false}, {"id": 268, "question": "以下哪个不属于NIST云计算参考架构定义的云计算参与者（）", "options": {"A": "消费者", "B": "运行商", "C": "提供者", "D": "审计者"}, "answer": ["B"], "multi": false}, {"id": 269, "question": "当客户需要执行openstack上虚机相关的操作时，能且只能向（）发送REST API请求", "options": {"A": "nova-conductor", "B": "nova-scheduler", "C": "nova-compute", "D": "nova-api"}, "answer": ["D"], "multi": false}, {"id": 270, "question": "token在（）内可以访问资源", "options": {"A": "1H", "B": "12H", "C": "任意时间段", "D": "有效的时间内"}, "answer": ["D"], "multi": false}, {"id": 271, "question": "关于以下Openstcak场景正确的是（）", "options": {"A": "计算型应用例如HPC是Openstack应用场景的一种", "B": "存储型应用例如Docker是Openstack应用场景的一种", "C": "网络型应用例如分WEB Server是Openstack应用场景的一种布式数据处理是Openstack应用场景的一种", "D": "WEB Server是Openstack应用场景的一种"}, "answer": ["A", "D"], "multi": true}, {"id": 272, "question": "以下平台是开源云平台的是（）", "options": {"A": "OpenStack", "B": "CloudStack", "C": "Eucalyptus", "D": "OpenNebula"}, "answer": ["A", "B", "C", "D"], "multi": true}, {"id": 273, "question": "以下哪种云服务在申请时一定会产生费用（）", "options": {"A": "VPC", "B": "VPC子网", "C": "安全组", "D": "EIP"}, "answer": ["D"], "multi": false}, {"id": 274, "question": "VIM编辑器的模式分为（ ）", "options": {"A": "编辑模式", "B": "命令模式", "C": "末行模式", "D": "管理模式"}, "answer": ["A", "B", "C"], "multi": true}, {"id": 275, "question": "高可用集群是以（）为目的的服务器集群技术", "options": {"A": "提高计算性能", "B": "减少服务中断时间", "C": "减少网络延迟", "D": "降低成本"}, "answer": ["B"], "multi": false}, {"id": 276, "question": "对某一个文件，将权限改为所有者具有读写权限，组具有读权限，其它没有任何权限，使用的命令是（）", "options": {"A": "chmod 370 xxx", "B": "chmod 250 xxx", "C": "chmod 651 xxx", "D": "chmod 640 xxx"}, "answer": ["D"], "multi": false}];
+
+// === State ===
+var state = {
+  mode: 'order',
+  indices: [],
+  current: 0,
+  selected: {},
+  answered: {},
+  exam: false,
+  examTimeLimit: 0,
+  examTimer: null,
+  examEndTime: 0,
+  wrongQuestions: [],
+  favQuestions: [],
+  doneQuestions: [],
+  correctCount: 0,
+  totalCount: 0,
+  _examWrongList: []
+};
+
+// === Persistence ===
+function loadState() {
+  try {
+    var saved = JSON.parse(localStorage.getItem('ywqt_state') || '{}');
+    state.wrongQuestions = dedup(saved.wrongQuestions || []);
+    state.favQuestions = dedup(saved.favQuestions || []);
+    state.doneQuestions = dedup(saved.doneQuestions || []);
+    state.correctCount = saved.correctCount || 0;
+    state.totalCount = saved.totalCount || 0;
+  } catch(e) {}
+}
+function saveState() {
+  try {
+    localStorage.setItem('ywqt_state', JSON.stringify({
+      wrongQuestions: state.wrongQuestions,
+      favQuestions: state.favQuestions,
+      doneQuestions: state.doneQuestions,
+      correctCount: state.correctCount,
+      totalCount: state.totalCount
+    }));
+  } catch(e) {}
+}
+function dedup(arr) {
+  var seen = {};
+  var result = [];
+  for (var i = 0; i < arr.length; i++) {
+    if (!seen[arr[i]]) { seen[arr[i]] = true; result.push(arr[i]); }
+  }
+  return result;
+}
+
+// === Utils ===
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 1800);
+}
+function shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+function showPage(id) {
+  var pages = document.querySelectorAll('.page');
+  for (var i = 0; i < pages.length; i++) pages[i].classList.remove('active');
+  document.getElementById(id).classList.add('active');
+  var tb = document.getElementById('topbar');
+  if (id === 'page-home') {
+    tb.style.display = 'none';
+    window.scrollTo(0, 0);
+  } else {
+    tb.style.display = 'flex';
+  }
+}
+function goHome() {
+  if (state.examTimer) { clearInterval(state.examTimer); state.examTimer = null; }
+  state.exam = false;
+  showPage('page-home');
+  updateHomeStats();
+  document.getElementById('search-results').innerHTML = '';
+  document.getElementById('search-input').value = '';
+  document.getElementById('bookmark-btn').style.display = 'none';
+  hideSubmitBar();
+}
+function updateHomeStats() {
+  document.getElementById('stat-done').textContent = state.doneQuestions.length;
+  var acc = state.totalCount > 0 ? Math.round(state.correctCount * 100 / state.totalCount) : 0;
+  document.getElementById('stat-accuracy').textContent = acc + '%';
+  document.getElementById('stat-wrong').textContent = state.wrongQuestions.length;
+  document.getElementById('stat-fav').textContent = state.favQuestions.length;
+  document.getElementById('wrong-count-desc').textContent = state.wrongQuestions.length + '题待复习';
+  document.getElementById('fav-count-desc').textContent = state.favQuestions.length + '题收藏';
+}
+
+// === Practice Mode ===
+function startPractice(mode) {
+  state.mode = mode;
+  state.exam = false;
+  state.selected = {};
+  state.answered = {};
+  state.current = 0;
+  if (mode === 'order') {
+    state.indices = [];
+    for (var i = 0; i < QUESTIONS.length; i++) state.indices.push(i);
+    document.getElementById('topbar-title').textContent = '顺序练习';
+  } else if (mode === 'random') {
+    var all = [];
+    for (var j = 0; j < QUESTIONS.length; j++) all.push(j);
+    state.indices = shuffle(all);
+    document.getElementById('topbar-title').textContent = '随机练习';
+  }
+  document.getElementById('topbar-right').textContent = state.indices.length + '题';
+  showPage('page-quiz');
+  renderQuestion();
+  document.getElementById('bookmark-btn').style.display = 'flex';
+  document.getElementById('quiz-actions').style.display = 'flex';
+}
+function showWrongMode() {
+  if (state.wrongQuestions.length === 0) { showToast('错题本为空，继续加油'); return; }
+  state.mode = 'wrong';
+  state.exam = false;
+  state.selected = {}; state.answered = {}; state.current = 0;
+  state.indices = state.wrongQuestions.slice();
+  document.getElementById('topbar-title').textContent = '错题本';
+  document.getElementById('topbar-right').textContent = state.indices.length + '题';
+  showPage('page-quiz');
+  renderQuestion();
+  document.getElementById('bookmark-btn').style.display = 'flex';
+  document.getElementById('quiz-actions').style.display = 'flex';
+}
+function showFavMode() {
+  if (state.favQuestions.length === 0) { showToast('收藏夹为空'); return; }
+  state.mode = 'fav';
+  state.exam = false;
+  state.selected = {}; state.answered = {}; state.current = 0;
+  state.indices = state.favQuestions.slice();
+  document.getElementById('topbar-title').textContent = '收藏夹';
+  document.getElementById('topbar-right').textContent = state.indices.length + '题';
+  showPage('page-quiz');
+  renderQuestion();
+  document.getElementById('bookmark-btn').style.display = 'flex';
+  document.getElementById('quiz-actions').style.display = 'flex';
+}
+
+// === Exam Mode ===
+function startExam() {
+  var count = parseInt(document.getElementById('exam-count').value, 10);
+  var timeLimit = parseInt(document.getElementById('exam-time').value, 10);
+  state.mode = 'exam';
+  state.exam = true;
+  state.selected = {}; state.answered = {}; state.current = 0;
+  state.examTimeLimit = timeLimit;
+  var all = [];
+  for (var i = 0; i < QUESTIONS.length; i++) all.push(i);
+  state.indices = shuffle(all).slice(0, count);
+  document.getElementById('topbar-title').textContent = '模拟考试';
+  document.getElementById('topbar-right').textContent = '';
+  if (timeLimit > 0) {
+    document.getElementById('topbar-right').innerHTML = '<span style="font-size:14px;font-weight:600" id="exam-timer">--:--</span>';
+    state.examEndTime = Date.now() + timeLimit * 60 * 1000;
+    updateExamTimer();
+    state.examTimer = setInterval(updateExamTimer, 1000);
+  }
+  showPage('page-quiz');
+  renderQuestion();
+  document.getElementById('bookmark-btn').style.display = 'none';
+  document.getElementById('quiz-actions').style.display = 'none';
+  showSubmitBar();
+}
+function updateExamTimer() {
+  if (!state.examEndTime) return;
+  var remain = Math.max(0, state.examEndTime - Date.now());
+  var m = Math.floor(remain / 60000);
+  var s = Math.floor((remain % 60000) / 1000);
+  var label = document.getElementById('exam-timer');
+  if (label) {
+    label.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+    if (remain < 60000) label.style.color = '#FFB400';
+    if (remain === 0) { clearInterval(state.examTimer); submitExam(); }
+  }
+}
+function submitExam() {
+  if (state.examTimer) { clearInterval(state.examTimer); state.examTimer = null; }
+  var correct = 0, wrong = 0, blank = 0;
+  var wrongList = [];
+  for (var i = 0; i < state.indices.length; i++) {
+    var qi = state.indices[i];
+    var ans = state.selected[qi];
+    var q = QUESTIONS[qi];
+    if (!ans || ans.length === 0) { blank++; wrongList.push(qi); }
+    else {
+      var sa = ans.slice().sort().join(',');
+      var sc = q.answer.slice().sort().join(',');
+      if (sa === sc) { correct++; }
+      else { wrong++; wrongList.push(qi); }
+      state.totalCount++;
+      if (sa === sc) {
+        state.correctCount++;
+        if (state.doneQuestions.indexOf(qi) === -1) state.doneQuestions.push(qi);
+      } else {
+        if (state.wrongQuestions.indexOf(qi) === -1) state.wrongQuestions.push(qi);
+        if (state.doneQuestions.indexOf(qi) === -1) state.doneQuestions.push(qi);
+      }
+    }
+  }
+  saveState();
+  var score = Math.round(correct * 100 / state.indices.length);
+  document.getElementById('result-score').textContent = score + '分';
+  document.getElementById('result-info').textContent = '共' + state.indices.length + '题 · 答对' + correct + '题 · 答错' + wrong + '题 · 未答' + blank + '题';
+  document.getElementById('result-correct').textContent = correct;
+  document.getElementById('result-wrong').textContent = wrong;
+  document.getElementById('result-blank').textContent = blank;
+  state._examWrongList = wrongList;
+  hideSubmitBar();
+  showPage('page-result');
+  window.scrollTo(0, 0);
+}
+function reviewExam() {
+  if (!state._examWrongList || state._examWrongList.length === 0) { showToast('没有错题，完美'); return; }
+  state.mode = 'exam-review';
+  state.exam = false;
+  state.selected = {}; state.answered = {}; state.current = 0;
+  state.indices = state._examWrongList.slice();
+  document.getElementById('topbar-title').textContent = '错题回顾';
+  document.getElementById('topbar-right').textContent = state.indices.length + '题';
+  showPage('page-quiz');
+  renderQuestion();
+  document.getElementById('bookmark-btn').style.display = 'flex';
+  document.getElementById('quiz-actions').style.display = 'flex';
+}
+
+// === Submit Bar ===
+function showSubmitBar() {
+  var c = document.getElementById('submit-bar-container');
+  c.innerHTML = '<div class="submit-bar show" id="submit-bar"><button id="btn-submit-exam">交卷</button></div>';
+}
+function hideSubmitBar() {
+  var c = document.getElementById('submit-bar-container');
+  c.innerHTML = '';
+}
+
+// === Render Question ===
+function renderQuestion() {
+  var qi = state.indices[state.current];
+  var q = QUESTIONS[qi];
+  var answered = state.answered[qi];
+  var selectedAns = state.selected[qi] || [];
+
+  var progress = ((state.current + 1) / state.indices.length * 100).toFixed(1);
+  document.getElementById('quiz-progress-text').textContent = (state.current + 1) + '/' + state.indices.length;
+  document.getElementById('quiz-progress-fill').style.width = progress + '%';
+
+  if (!state.exam) {
+    var correctSoFar = 0;
+    for (var k in state.answered) {
+      var a = state.selected[k];
+      var qq = QUESTIONS[k];
+      if (a && a.slice().sort().join(',') === qq.answer.slice().sort().join(',')) correctSoFar++;
+    }
+    document.getElementById('quiz-score-text').textContent = correctSoFar + '对';
+  } else {
+    document.getElementById('quiz-score-text').textContent = '';
+  }
+
+  var html = '';
+  html += '<div class="quiz-card">';
+  html += '<div class="q-tag">' + (q.multi ? '多选题' : '单选题') + '</div>';
+  if (state.wrongQuestions.indexOf(qi) !== -1 && !state.exam) {
+    html += '<div class="q-tag wrong-tag" style="margin-left:4px">错题</div>';
+  }
+  html += '<div class="q-text">' + q.question + '</div>';
+  html += '<div class="option-list" id="option-list">';
+  var letters = ['A','B','C','D'];
+  for (var li = 0; li < letters.length; li++) {
+    var letter = letters[li];
+    var isSelected = selectedAns.indexOf(letter) !== -1;
+    var isCorrect = q.answer.indexOf(letter) !== -1;
+    var cls = 'option-item';
+    if (answered) {
+      cls += ' disabled';
+      if (isCorrect) cls += ' correct';
+      else if (isSelected) cls += ' wrong';
+    } else {
+      if (isSelected) cls += ' selected';
+    }
+    html += '<div class="' + cls + '" data-letter="' + letter + '">';
+    html += '<div class="letter">' + letter + '</div>';
+    html += '<div class="text">' + q.options[letter] + '</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+  if (answered) {
+    var isC = selectedAns.slice().sort().join(',') === q.answer.slice().sort().join(',');
+    html += '<div class="feedback show ' + (isC ? 'correct' : 'wrong') + '">';
+    if (isC) html += '\u2713 回答正确';
+    else html += '\u2717 正确答案: <span class="answer-text">' + q.answer.join(', ') + '</span>';
+    html += '</div>';
+  }
+  html += '</div>';
+  if (state.current < 3 && !state.exam) {
+    html += '<div class="swipe-hint">左右滑动切换题目</div>';
+  }
+  document.getElementById('quiz-content').innerHTML = html;
+
+  document.getElementById('prev-btn').disabled = state.current === 0;
+  var nextBtn = document.getElementById('next-btn');
+  nextBtn.textContent = state.current === state.indices.length - 1 ? '完成' : '下一题 \u2192';
+
+  var bmBtn = document.getElementById('bookmark-btn');
+  if (state.favQuestions.indexOf(qi) !== -1) {
+    bmBtn.classList.add('active');
+    bmBtn.innerHTML = '\u2605';
+  } else {
+    bmBtn.classList.remove('active');
+    bmBtn.innerHTML = '\u2606';
+  }
+}
+
+function selectOption(letter) {
+  var qi = state.indices[state.current];
+  if (state.answered[qi]) return;
+  var q = QUESTIONS[qi];
+  if (q.multi) {
+    if (!state.selected[qi]) state.selected[qi] = [];
+    var idx = state.selected[qi].indexOf(letter);
+    if (idx === -1) state.selected[qi].push(letter);
+    else state.selected[qi].splice(idx, 1);
+    renderQuestion();
+  } else {
+    state.selected[qi] = [letter];
+    revealAnswer();
+  }
+}
+function revealAnswer() {
+  var qi = state.indices[state.current];
+  if (state.answered[qi] || state.exam) return;
+  var sel = state.selected[qi];
+  if (!sel || sel.length === 0) return;
+  state.answered[qi] = true;
+  var q = QUESTIONS[qi];
+  var isC = sel.slice().sort().join(',') === q.answer.slice().sort().join(',');
+  state.totalCount++;
+  if (isC) {
+    state.correctCount++;
+    var wIdx = state.wrongQuestions.indexOf(qi);
+    if (wIdx !== -1) state.wrongQuestions.splice(wIdx, 1);
+  } else {
+    if (state.wrongQuestions.indexOf(qi) === -1) state.wrongQuestions.push(qi);
+  }
+  if (state.doneQuestions.indexOf(qi) === -1) state.doneQuestions.push(qi);
+  saveState();
+  renderQuestion();
+}
+function nextQuestion() {
+  var qi = state.indices[state.current];
+  var q = QUESTIONS[qi];
+  if (!state.exam && !state.answered[qi] && q.multi && state.selected[qi] && state.selected[qi].length > 0) {
+    revealAnswer();
+    return;
+  }
+  if (state.current < state.indices.length - 1) {
+    state.current++;
+    renderQuestion();
+  } else {
+    if (state.mode === 'wrong') showToast('错题本已刷完');
+    else if (state.mode === 'fav') showToast('收藏夹已刷完');
+    else showToast('全部题目已刷完');
+    goHome();
+  }
+}
+function prevQuestion() {
+  if (state.current > 0) { state.current--; renderQuestion(); }
+}
+function toggleBookmark() {
+  var qi = state.indices[state.current];
+  var idx = state.favQuestions.indexOf(qi);
+  if (idx === -1) { state.favQuestions.push(qi); showToast('已收藏'); }
+  else { state.favQuestions.splice(idx, 1); showToast('已取消收藏'); }
+  saveState();
+  renderQuestion();
+}
+
+// === Search ===
+function doSearch() {
+  var kw = document.getElementById('search-input').value.trim().toLowerCase();
+  var container = document.getElementById('search-results');
+  if (!kw) { container.innerHTML = ''; return; }
+  var results = [];
+  for (var i = 0; i < QUESTIONS.length; i++) {
+    if (QUESTIONS[i].question.toLowerCase().indexOf(kw) !== -1) results.push(i);
+  }
+  if (results.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">\uD83D\uDD0D</div><p>未找到相关题目</p></div>';
+    return;
+  }
+  var html = '';
+  for (var ri = 0; ri < Math.min(results.length, 50); ri++) {
+    var qi2 = results[ri];
+    var q2 = QUESTIONS[qi2];
+    var preview = q2.question.length > 60 ? q2.question.substring(0, 60) + '...' : q2.question;
+    html += '<div class="fav-item" data-jump="' + qi2 + '">';
+    html += '<div class="q-preview">' + preview + '</div>';
+    html += '<div class="q-meta"><span class="tag">' + (q2.multi ? '多选' : '单选') + ' · 第' + (qi2+1) + '题</span><span>点击查看 \u2192</span></div>';
+    html += '</div>';
+  }
+  if (results.length > 50) {
+    html += '<div style="text-align:center;padding:10px;color:var(--text-secondary);font-size:12px">共' + results.length + '条结果，仅显示前50条</div>';
+  }
+  container.innerHTML = html;
+}
+function jumpToQuestion(qi) {
+  state.mode = 'order';
+  state.exam = false;
+  state.selected = {}; state.answered = {}; state.current = 0;
+  state.indices = [qi];
+  document.getElementById('topbar-title').textContent = '题目预览';
+  document.getElementById('topbar-right').textContent = '';
+  showPage('page-quiz');
+  renderQuestion();
+  document.getElementById('bookmark-btn').style.display = 'flex';
+}
+
+// === Event Delegation ===
+document.addEventListener('click', function(e) {
+  var target = e.target;
+
+  // Top bar back
+  var homeBtn = target.closest('#btn-home');
+  if (homeBtn) { goHome(); return; }
+
+  // Practice mode cards
+  var modeCard = target.closest('[data-action]');
+  if (modeCard) {
+    var action = modeCard.getAttribute('data-action');
+    if (action === 'practice-order') startPractice('order');
+    else if (action === 'practice-random') startPractice('random');
+    else if (action === 'wrong-mode') showWrongMode();
+    else if (action === 'fav-mode') showFavMode();
+    return;
+  }
+
+  // Start exam
+  if (target.closest('#btn-start-exam')) { startExam(); return; }
+
+  // Submit exam
+  if (target.closest('#btn-submit-exam')) { submitExam(); return; }
+
+  // Review exam
+  if (target.closest('#btn-review')) { reviewExam(); return; }
+
+  // Result home
+  if (target.closest('#btn-result-home')) { goHome(); return; }
+
+  // Prev/Next buttons
+  if (target.closest('#prev-btn')) { prevQuestion(); return; }
+  if (target.closest('#next-btn')) { nextQuestion(); return; }
+
+  // Bookmark
+  if (target.closest('#bookmark-btn')) { toggleBookmark(); return; }
+
+  // Option items (quiz)
+  var opt = target.closest('.option-item');
+  if (opt) {
+    var letter = opt.getAttribute('data-letter');
+    if (letter) selectOption(letter);
+    return;
+  }
+
+  // Search result items
+  var jumpItem = target.closest('[data-jump]');
+  if (jumpItem) {
+    var qi = parseInt(jumpItem.getAttribute('data-jump'), 10);
+    jumpToQuestion(qi);
+    return;
+  }
+});
+
+// Search input
+document.addEventListener('input', function(e) {
+  if (e.target && e.target.id === 'search-input') doSearch();
+});
+
+// Touch swipe
+var touchStartX = 0;
+document.addEventListener('touchstart', function(e) {
+  if (e.changedTouches && e.changedTouches[0]) touchStartX = e.changedTouches[0].screenX;
+}, { passive: true });
+document.addEventListener('touchend', function(e) {
+  if (!e.changedTouches || !e.changedTouches[0]) return;
+  var touchEndX = e.changedTouches[0].screenX;
+  var diff = touchStartX - touchEndX;
+  var quizPage = document.getElementById('page-quiz');
+  if (!quizPage.classList.contains('active')) return;
+  if (Math.abs(diff) < 60) return;
+  var target = e.target;
+  if (target.closest && target.closest('.option-item')) return;
+  if (diff > 0) nextQuestion();
+  else prevQuestion();
+}, { passive: true });
+
+// === Init ===
+try {
+  loadState();
+  updateHomeStats();
+} catch(e) {
+  document.body.innerHTML = '<div style="padding:20px;text-align:center;color:red">JS\u521d\u59cb\u5316\u9519\u8bef: ' + e.message + '</div>';
+}
+</script>
+</body>
+</html>
